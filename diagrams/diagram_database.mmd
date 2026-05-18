@@ -1,0 +1,94 @@
+erDiagram
+    Users ||--o{ Jobs : "создаёт"
+    Users ||--o{ Proposals : "подает"
+    Users ||--o{ Posts : "автор"
+    Users ||--o{ Reviews : "получает"
+    Users ||--o{ Reviews : "пишет"
+    Users ||--o{ Chats : "участник 1"
+    Users ||--o{ Chats : "участник 2"
+    Users ||--o{ Messages : "отправляет"
+    Users ||--o{ PostLikes : "лайкает"
+    Users ||--o{ RefreshTokens : "имеет"
+    Users ||--o{ EmailVerificationTokens : "имеет"
+    Categories ||--o{ Jobs : "включает"
+    Jobs ||--o{ JobSkills : "имеет"
+    Jobs ||--o{ JobAttachments : "имеет"
+    Jobs ||--o{ Proposals : "получает"
+    Jobs ||--o{ Chats : "связан"
+    Jobs ||--o{ Reviews : "связан"
+    Skills ||--o{ JobSkills : ""
+    Skills ||--o{ ProposalSkills : ""
+    Proposals ||--o{ ProposalSkills : "имеет"
+    Chats ||--o{ Messages : "содержит"
+    Messages ||--o{ MessageAttachments : "имеет"
+    Posts ||--o{ PostLikes : "имеет"
+    Users {
+        Guid Id PK
+        string Email UK
+        string PasswordHash
+        string Name
+        string Role
+        string AvatarUrl
+        string CoverUrl
+        string Bio
+        string Location
+        int YearsOfExperience
+        bool IsVerified
+        decimal Rating
+        int ReviewsCount
+        int CompletedJobs
+        decimal HourlyRate
+        string PortfolioUrl
+        DateTime CreatedAt
+    }
+    Categories {
+        Guid Id PK
+        string Name
+        string Slug UK
+        string Icon
+        string Description
+        string ImageUrl
+        string Color
+    }
+    Jobs {
+        Guid Id PK
+        string Title
+        string Description
+        Guid CategoryId FK
+        decimal BudgetMin
+        decimal BudgetMax
+        string BudgetType
+        DateTime Deadline
+        bool IsUrgent
+        string Status
+        Guid ClientId FK
+        DateTime CreatedAt
+    }
+    Proposals {
+        Guid Id PK
+        Guid JobId FK
+        Guid UserId FK
+        decimal Price
+        int DeadlineDays
+        string CoverLetter
+        string Status
+        DateTime CreatedAt
+    }
+    Chats {
+        Guid Id PK
+        Guid UserId FK
+        Guid ParticipantId FK
+        Guid JobId FK
+        string LastMessage
+        DateTime LastMessageAt
+        int UnreadCount
+        DateTime CreatedAt
+    }
+    Messages {
+        Guid Id PK
+        Guid ChatId FK
+        Guid SenderId FK
+        string Text
+        bool IsRead
+        DateTime CreatedAt
+    }

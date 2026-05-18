@@ -1,0 +1,52 @@
+classDiagram
+    class BaseController {
+        +GetCurrentUserId() Guid
+        +OkPaginated~T~(items, total, page, pageSize)
+    }
+    class AuthController {
+        +Register(RegisterRequest)
+        +Login(LoginRequest)
+        +VerifyEmail(token)
+        +ResendVerification(email)
+        +Refresh(RefreshRequest)
+        +Logout(RefreshRequest)
+    }
+    class UsersController {
+        +GetMe()
+        +GetById(id)
+        +GetBySlug(slug)
+        +Update(id, UpdateUserRequest)
+        +UploadAvatar(id, file)
+        +UploadCover(id, file)
+        +GetFreelancers(page, pageSize)
+    }
+    class JobsController {
+        +GetAll(JobFilterRequest)
+        +GetById(id)
+        +Create(CreateJobRequest)
+        +Update(id, UpdateJobRequest)
+        +Delete(id)
+        +UpdateStatus(id, status)
+    }
+    class ProposalsController {
+        +GetByJobId(jobId)
+        +Create(jobId, CreateProposalRequest)
+        +UpdateStatus(id, status)
+    }
+    class ChatsController {
+        +GetMyChats()
+        +Create(CreateChatRequest)
+        +GetMessages(chatId, page)
+        +SendMessage(chatId, text)
+        +MarkAsRead(chatId)
+    }
+    class ChatHub {
+        +SendMessage(chatId, text)
+        +MarkAsRead(chatId)
+        +Typing(chatId)
+    }
+    BaseController <|-- AuthController
+    BaseController <|-- UsersController
+    BaseController <|-- JobsController
+    BaseController <|-- ProposalsController
+    BaseController <|-- ChatsController

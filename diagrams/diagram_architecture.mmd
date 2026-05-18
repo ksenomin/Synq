@@ -1,0 +1,24 @@
+graph TB
+    subgraph Клиент
+        SPA["React SPA<br/>(Vite + TailwindCSS)"]
+    end
+    subgraph Сервер["Сервер (ASP.NET Core 8)"]
+        API["RESTful API<br/>Контроллеры"]
+        HUB["SignalR Hub<br/>/chatHub"]
+        AUTH["JWT Authentication"]
+        SVC["Сервисы:<br/>Auth, User, Job,<br/>Proposal, Chat,<br/>Post, Review,<br/>Category"]
+    end
+    subgraph Хранение["Слой хранения"]
+        DB[("PostgreSQL 16<br/>База данных")]
+        FS["Локальное хранилище<br/>файлов (/uploads)"]
+    end
+    subgraph Внешние["Внешние сервисы"]
+        MAIL["Mailpit<br/>SMTP-сервер"]
+    end
+    SPA -->|"HTTP/JSON"| API
+    SPA -->|"WebSocket"| HUB
+    API --> AUTH
+    API --> SVC
+    SVC --> DB
+    SVC --> FS
+    SVC --> MAIL

@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant И as Исполнитель
+    participant SPA as React SPA
+    participant API as Web API
+    participant Сервисы as Сервисы
+    participant DB as PostgreSQL
+    И->>SPA: Нажимает "Откликнуться"
+    SPA->>API: POST /api/proposals/job/{jobId}
+    API->>Сервисы: ProposalService.CreateAsync()
+    Сервисы->>DB: INSERT INTO Proposals
+    DB-->>Сервисы: Результат
+    Сервисы-->>API: ProposalDto
+    API-->>SPA: 200 OK
+    SPA-->>И: Уведомление об успехе
+    Note over И,DB: Принятие отклика заказчиком
+    participant З as Заказчик
+    З->>SPA: Нажимает "Принять"
+    SPA->>API: PATCH /api/proposals/{id}/status
+    API->>Сервисы: ProposalService.UpdateStatusAsync(Accepted)
+    Сервисы->>DB: UPDATE Proposals SET Status='Accepted'
+    Сервисы->>DB: UPDATE Jobs SET Status='InProgress'
+    DB-->>Сервисы: OK
+    Сервисы-->>API: ProposalDto
+    API-->>SPA: 200 OK
+    SPA-->>З: Статус обновлён

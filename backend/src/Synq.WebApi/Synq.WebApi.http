@@ -1,0 +1,6 @@
+@Synq.WebApi_HostAddress = http://localhost:5002
+
+GET {{Synq.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
