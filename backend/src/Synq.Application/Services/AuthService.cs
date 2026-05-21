@@ -78,14 +78,7 @@ public class AuthService
             _logger.LogError(ex, "Failed to send verification email to {Email}", user.Email);
         }
 
-        return new AuthResponse
-        {
-            AccessToken = string.Empty,
-            RefreshToken = string.Empty,
-            ExpiresAt = DateTime.UtcNow,
-            User = MapToUserDto(user),
-            NeedsVerification = true
-        };
+        return await GenerateAuthResponseAsync(user, ct);
     }
 
     /// <summary>

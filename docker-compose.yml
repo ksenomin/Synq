@@ -30,7 +30,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://0.0.0.0:5000
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=synq;Username=postgres;Password=postgres
-    command: sh -c "dotnet restore && dotnet run --project src/Synq.WebApi"
+    command: sh -c "dotnet restore Synq.sln && dotnet run --project src/Synq.WebApi/Synq.WebApi.csproj --no-restore"
     depends_on:
       postgres:
         condition: service_healthy

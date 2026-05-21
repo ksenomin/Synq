@@ -27,6 +27,7 @@ import { usersApi, postsApi, reviewsApi, chatsApi } from '../api'
 import { useAppContext } from '../store'
 import { normalizeUser } from '../utils/normalize'
 import { formatBudget, getRoleName } from '../utils/helpers'
+import { jobs } from '../data/jobs'
 
 const ProfilePage = () => {
   const { id } = useParams()
@@ -58,6 +59,12 @@ const ProfilePage = () => {
   const [coverError, setCoverError] = useState(false)
 
   const isOwnProfile = user && currentUserId === user.id
+  const isClient = user?.role === 'client'
+
+  // Подсчет выполненных заказов для заказчика
+  const completedJobsCount = isClient && user
+    ? jobs.filter(job => job.clientId === user.id && job.status === 'completed').length
+    : 0
 
   const postTypes = [
     { id: 'text', label: 'Текст', icon: FileText },
@@ -74,8 +81,8 @@ const ProfilePage = () => {
         reviewsApi.getByUserId(userData.id),
       ])
     }).then(([postsData, reviewsData]) => {
-      setPosts(postsData.items || [])
-      setReviews(reviewsData || [])
+      setPosts(Array.isArray(postsData?.items) ? postsData.items : [])
+      setReviews(Array.isArray(reviewsData) ? reviewsData : [])
     }).catch(console.error).finally(() => setLoading(false))
   }, [id])
 
@@ -159,7 +166,7 @@ const ProfilePage = () => {
       setNewPostContent('')
       setNewPostType('text')
       const postsData = await postsApi.getByUserId(user.id)
-      setPosts(postsData.items || [])
+      setPosts(Array.isArray(postsData?.items) ? postsData.items : [])
     } catch (err) {
       setPostError(err.response?.data?.error || 'Ошибка при создании публикации')
     } finally {
@@ -225,8 +232,7 @@ const ProfilePage = () => {
                 src={user.avatar}
                 name={user.name}
                 size="xl"
-                verified={user.verified}
-                className="border-4 border-white shadow-lg"
+                className="shadow-lg"
               />
               {isOwnProfile && (
                 <label className="absolute bottom-2 right-2 w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors shadow-lg border-2 border-white">
@@ -253,8 +259,12 @@ const ProfilePage = () => {
                   <span className="font-bold text-lg">{user.rating}</span>
                   <span className="text-gray-500 text-sm">({user.reviewsCount} отзывов)</span>
                 </div>
-                <span className="text-gray-300">|</span>
-                <span className="text-gray-600">{user.completedJobs} выполненных работ</span>
+                {!isClient && (
+                  <>
+                    <span className="text-gray-300">|</span>
+                    <span className="text-gray-600">{user.completedJobs} выполненных работ</span>
+                  </>
+                )}
                 <span className="text-gray-300">|</span>
                 <span className="flex items-center gap-1 text-gray-600">
                   <MapPin className="w-4 h-4" />
@@ -280,11 +290,18 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          <Card className="p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">{user.completedJobs}</p>
-            <p className="text-sm text-gray-500">Выполнено работ</p>
-          </Card>
+        <div className={`grid grid-cols-2 ${isClient ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-4 mb-12`}>
+          {isClient ? (
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900">{completedJobsCount}</p>
+              <p className="text-sm text-gray-500">Создано заказов</p>
+            </Card>
+          ) : (
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900">{user.completedJobs}</p>
+              <p className="text-sm text-gray-500">Выполнено работ</p>
+            </Card>
+          )}
           <Card className="p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{user.reviewsCount}</p>
             <p className="text-sm text-gray-500">Отзывов</p>
@@ -293,12 +310,14 @@ const ProfilePage = () => {
             <p className="text-2xl font-bold text-gray-900">{user.rating}</p>
             <p className="text-sm text-gray-500">Рейтинг</p>
           </Card>
-          <Card className="p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">
-              {user.hourlyRate ? formatBudget(user.hourlyRate) : '—'}
-            </p>
-            <p className="text-sm text-gray-500">В час</p>
-          </Card>
+          {!isClient && (
+            <Card className="p-4 text-center">
+              <p className="text-2xl font-bold text-gray-900">
+                {user.hourlyRate ? formatBudget(user.hourlyRate) : '—'}
+              </p>
+              <p className="text-sm text-gray-500">В час</p>
+            </Card>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -310,7 +329,7 @@ const ProfilePage = () => {
               </Card>
             )}
 
-            {user.yearsOfExperience && (
+            {!isClient && !!user.yearsOfExperience && (
               <Card className="p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Опыт</h2>
                 <div className="flex items-center gap-3">
@@ -320,7 +339,7 @@ const ProfilePage = () => {
               </Card>
             )}
 
-            {user.portfolioUrl && (
+            {!isClient && user.portfolioUrl && (
               <Card className="p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Портфолио</h2>
                 <a
@@ -337,32 +356,43 @@ const ProfilePage = () => {
           </div>
 
           <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Публикации</h2>
-              {isOwnProfile && (
-                <Button variant="primary" size="sm" onClick={() => setIsCreatePostOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Создать публикацию
-                </Button>
-              )}
-            </div>
+            {!isClient && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-gray-900">Публикации</h2>
+                    {posts.length > 0 && (
+                      <span className="text-sm font-medium text-gray-500 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                        {posts.length}
+                      </span>
+                    )}
+                  </div>
+                  {isOwnProfile && (
+                    <Button variant="primary" size="sm" onClick={() => setIsCreatePostOpen(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Создать публикацию
+                    </Button>
+                  )}
+                </div>
 
-            {posts.length > 0 ? (
-              <div className="space-y-6">
-                {posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
-              </div>
-            ) : (
-              <Card className="p-12 text-center">
-                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Пока нет публикаций
-                </h3>
-                <p className="text-gray-600">
-                  Пользователь ещё не создал ни одной публикации
-                </p>
-              </Card>
+                {posts.length > 0 ? (
+                  <div className="space-y-6">
+                    {posts.map((post) => (
+                      <PostCard key={post.id} post={post} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-12 text-center">
+                    <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      Пока нет публикаций
+                    </h3>
+                    <p className="text-gray-600">
+                      Пользователь ещё не создал ни одной публикации
+                    </p>
+                  </Card>
+                )}
+              </>
             )}
 
             {reviews.length > 0 && (
@@ -466,29 +496,33 @@ const ProfilePage = () => {
             onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
           />
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              type="number"
-              label="Ставка в час (₽)"
-              placeholder="3500"
-              value={editForm.hourlyRate}
-              onChange={(e) => setEditForm({ ...editForm, hourlyRate: e.target.value })}
-            />
-            <Input
-              type="number"
-              label="Опыт (лет)"
-              placeholder="5"
-              value={editForm.yearsOfExperience}
-              onChange={(e) => setEditForm({ ...editForm, yearsOfExperience: e.target.value })}
-            />
-          </div>
+          {!isClient && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  type="number"
+                  label="Ставка в час (₽)"
+                  placeholder="3500"
+                  value={editForm.hourlyRate}
+                  onChange={(e) => setEditForm({ ...editForm, hourlyRate: e.target.value })}
+                />
+                <Input
+                  type="number"
+                  label="Опыт (лет)"
+                  placeholder="5"
+                  value={editForm.yearsOfExperience}
+                  onChange={(e) => setEditForm({ ...editForm, yearsOfExperience: e.target.value })}
+                />
+              </div>
 
-          <Input
-            label="Ссылка на портфолио"
-            placeholder="https://..."
-            value={editForm.portfolioUrl}
-            onChange={(e) => setEditForm({ ...editForm, portfolioUrl: e.target.value })}
-          />
+              <Input
+                label="Ссылка на портфолио"
+                placeholder="https://..."
+                value={editForm.portfolioUrl}
+                onChange={(e) => setEditForm({ ...editForm, portfolioUrl: e.target.value })}
+              />
+            </>
+          )}
 
           <div className="flex gap-3 pt-4">
             <Button variant="primary" fullWidth onClick={handleSave} disabled={editLoading}>

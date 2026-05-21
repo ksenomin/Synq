@@ -27,7 +27,7 @@ const Avatar = ({
   }
 
   return (
-    <div className={clsx('relative inline-flex', className)}>
+    <div className={clsx('relative inline-flex shrink-0 rounded-full', className)}>
       <div
         className={clsx(
           'rounded-full overflow-hidden bg-primary-100 text-primary-700 flex items-center justify-center font-semibold',

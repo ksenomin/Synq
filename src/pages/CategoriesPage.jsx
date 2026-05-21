@@ -68,7 +68,7 @@ const CategoriesPage = () => {
                 transition={{ delay: index * 0.1 }}
                 className={category.span}
               >
-                <Link to="/jobs">
+                <Link to={`/jobs?category=${category.slug}`}>
                   <Card hoverable className="overflow-hidden group h-full">
                     <div
                       className={`h-40 bg-gradient-to-r ${category.color} relative flex items-center justify-center`}

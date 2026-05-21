@@ -24,6 +24,7 @@ import { normalizeProposal } from '../../utils/normalize'
 const JobModal = () => {
   const { state, closeJobModal } = useAppContext()
   const { selectedJob, isJobModalOpen, currentUser } = state
+  const isClient = currentUser?.role === 'client'
 
   const [jobProposals, setJobProposals] = useState([])
   const [userProposal, setUserProposal] = useState(null)
@@ -336,7 +337,7 @@ const JobModal = () => {
               </AnimatePresence>
 
               <div className="p-6 border-t border-gray-700/50 flex items-center gap-3">
-                {!showProposalForm && (
+                {!showProposalForm && !isClient && (
                   <>
                     {userProposal && userProposal.status !== 'withdrawn' ? (
                       <div className="flex-1 flex items-center justify-between bg-success-500/10 border border-success-500/20 rounded-xl px-4 py-3">
@@ -369,6 +370,13 @@ const JobModal = () => {
                       </>
                     )}
                   </>
+                )}
+                {isClient && (
+                  <div className="flex-1 text-center py-3">
+                    <span className="text-gray-400">
+                      Просмотр задания
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

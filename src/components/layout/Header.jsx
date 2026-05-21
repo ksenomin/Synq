@@ -41,12 +41,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Логотип */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-xl">S</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900 hidden sm:block">
-              SYNQ
-            </span>
+            <img
+              src="/synq-logo.jpg"
+              alt="SYNQ"
+              className="h-10 w-auto rounded-xl object-contain"
+            />
           </Link>
 
           {/* Навигация (десктоп) */}

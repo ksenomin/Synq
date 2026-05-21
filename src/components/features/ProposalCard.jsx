@@ -3,12 +3,16 @@ import { Star, MessageSquare, User, Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card, Avatar, Button, Badge } from '../common'
 import { formatBudget } from '../../utils/helpers'
+import { useAppContext } from '../../store'
 
 /**
  * Карточка отклика на задание
  * @param {Object} proposal - объект отклика
  */
 const ProposalCard = ({ proposal }) => {
+  const { state } = useAppContext()
+  const { currentUser } = state
+  const isClient = currentUser?.role === 'client'
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -78,22 +82,32 @@ const ProposalCard = ({ proposal }) => {
           </div>
         </div>
 
-        {/* Кнопки действий */}
-        <div className="flex items-center gap-3">
-          <Button variant="primary" size="sm" className="flex-1">
-            <Check className="w-4 h-4 mr-2" />
-            Принять
-          </Button>
-          <Button variant="secondary" size="sm" className="flex-1">
-            <MessageSquare className="w-4 h-4 mr-2" />
-            Связаться
-          </Button>
+        {/* Кнопки действий — только для заказчиков */}
+        {isClient && (
+          <div className="flex items-center gap-3">
+            <Button variant="primary" size="sm" className="flex-1">
+              <Check className="w-4 h-4 mr-2" />
+              Принять
+            </Button>
+            <Button variant="secondary" size="sm" className="flex-1">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Связаться
+            </Button>
+            <Link to={`/profile/${proposal.userSlug}`}>
+              <Button variant="ghost" size="sm">
+                <User className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+        )}
+        {!isClient && (
           <Link to={`/profile/${proposal.userSlug}`}>
-            <Button variant="ghost" size="sm">
-              <User className="w-4 h-4" />
+            <Button variant="ghost" size="sm" className="w-full">
+              <User className="w-4 h-4 mr-2" />
+              Просмотреть профиль
             </Button>
           </Link>
-        </div>
+        )}
       </Card>
     </motion.div>
   )

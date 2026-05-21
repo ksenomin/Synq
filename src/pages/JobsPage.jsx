@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Search,
@@ -16,6 +16,7 @@ import { normalizeJob, normalizeCategory } from '../utils/normalize'
 
 const JobsPage = () => {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const { state, openJobModal, setJobFilters, resetJobFilters } = useAppContext()
   const jobFilters = state.jobFilters
 
@@ -28,12 +29,18 @@ const JobsPage = () => {
   const [localFilters, setLocalFilters] = useState(jobFilters)
 
   useEffect(() => {
-    const urlSearch = searchParams.get('search')
-    if (urlSearch && !jobFilters.search) {
+    const params = new URLSearchParams(location.search)
+    const urlSearch = params.get('search')
+    if (urlSearch && urlSearch !== jobFilters.search) {
       setJobFilters({ search: urlSearch })
       setLocalFilters((prev) => ({ ...prev, search: urlSearch }))
     }
-  }, [])
+    const urlCategory = params.get('category')
+    if (urlCategory && urlCategory !== jobFilters.category) {
+      setJobFilters({ category: urlCategory })
+      setLocalFilters((prev) => ({ ...prev, category: urlCategory }))
+    }
+  }, [location.search])
 
   useEffect(() => {
     categoriesApi.getAll().then((data) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Users, Filter, X } from 'lucide-react'
@@ -6,6 +6,7 @@ import { Button, Card, Badge, Input } from '../components/common'
 import { ProposalCard } from '../components/features'
 import { jobsApi, proposalsApi } from '../api'
 import { normalizeJob, normalizeProposal } from '../utils/normalize'
+import { jobs, proposals as mockProposals } from '../data'
 
 const JobProposalsPage = () => {
   const { id } = useParams()
@@ -24,15 +25,70 @@ const JobProposalsPage = () => {
   const [appliedSortBy, setAppliedSortBy] = useState('newest')
   const debounceRef = useRef(null)
 
+  // Загрузка данных
   useEffect(() => {
+    setLoading(true)
     Promise.all([
       jobsApi.getById(id),
       proposalsApi.getByJobId(id),
-    ]).then(([jobData, proposalsData]) => {
-      setJob(normalizeJob(jobData))
-      setProposals((proposalsData || []).map((p) => normalizeProposal(p)))
-    }).catch(console.error).finally(() => setLoading(false))
+    ])
+      .then(([jobData, proposalsData]) => {
+        setJob(normalizeJob(jobData))
+        setProposals((proposalsData || []).map((p) => normalizeProposal(p)))
+      })
+      .catch((err) => {
+        console.error('Error loading job proposals:', err)
+        // Fallback to mock data
+        const mockJob = jobs.find((j) => j.id === id)
+        if (mockJob) {
+          setJob(mockJob)
+        }
+        const mockList = mockProposals.filter((p) => p.jobId === id)
+        setProposals(mockList.map((p) => normalizeProposal(p)))
+      })
+      .finally(() => setLoading(false))
   }, [id])
+
+  // Debounce для фильтров
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setAppliedPriceMin(filterPriceMin)
+      setAppliedPriceMax(filterPriceMax)
+      setAppliedRating(filterRating)
+      setAppliedSortBy(sortBy)
+    }, 400)
+    return () => clearTimeout(debounceRef.current)
+  }, [filterPriceMin, filterPriceMax, filterRating, sortBy])
+
+  const handleResetFilters = () => {
+    setFilterPriceMin('')
+    setFilterPriceMax('')
+    setFilterRating('')
+    setSortBy('newest')
+    setAppliedPriceMin('')
+    setAppliedPriceMax('')
+    setAppliedRating('')
+    setAppliedSortBy('newest')
+  }
+
+  const filteredProposals = useMemo(
+    () =>
+      proposals
+        .filter((p) => {
+          if (appliedPriceMin && p.price < Number(appliedPriceMin)) return false
+          if (appliedPriceMax && p.price > Number(appliedPriceMax)) return false
+          if (appliedRating && p.rating < Number(appliedRating)) return false
+          return true
+        })
+        .sort((a, b) => {
+          if (appliedSortBy === 'price-asc') return a.price - b.price
+          if (appliedSortBy === 'price-desc') return b.price - a.price
+          if (appliedSortBy === 'rating') return b.rating - a.rating
+          return new Date(b.createdAt) - new Date(a.createdAt)
+        }),
+    [proposals, appliedPriceMin, appliedPriceMax, appliedRating, appliedSortBy]
+  )
 
   if (loading) {
     return (
@@ -54,44 +110,6 @@ const JobProposalsPage = () => {
       </div>
     )
   }
-
-  const applyFilters = () => {
-    setAppliedPriceMin(filterPriceMin)
-    setAppliedPriceMax(filterPriceMax)
-    setAppliedRating(filterRating)
-    setAppliedSortBy(sortBy)
-  }
-
-  const resetFilters = () => {
-    setFilterPriceMin('')
-    setFilterPriceMax('')
-    setFilterRating('')
-    setSortBy('newest')
-    setAppliedPriceMin('')
-    setAppliedPriceMax('')
-    setAppliedRating('')
-    setAppliedSortBy('newest')
-  }
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(applyFilters, 400)
-    return () => clearTimeout(debounceRef.current)
-  }, [filterPriceMin, filterPriceMax, filterRating, sortBy])
-
-  const filteredProposals = proposals
-    .filter((p) => {
-      if (appliedPriceMin && p.price < Number(appliedPriceMin)) return false
-      if (appliedPriceMax && p.price > Number(appliedPriceMax)) return false
-      if (appliedRating && p.rating < Number(appliedRating)) return false
-      return true
-    })
-    .sort((a, b) => {
-      if (appliedSortBy === 'price-asc') return a.price - b.price
-      if (appliedSortBy === 'price-desc') return b.price - a.price
-      if (appliedSortBy === 'rating') return b.rating - a.rating
-      return new Date(b.createdAt) - new Date(a.createdAt)
-    })
 
   return (
     <div className="py-12 lg:py-20">
@@ -194,7 +212,7 @@ const JobProposalsPage = () => {
                   </div>
                 </div>
                 <div className="mt-4 flex justify-end">
-                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                  <Button variant="ghost" size="sm" onClick={handleResetFilters}>
                     <X className="w-3 h-3 mr-1" />
                     Сбросить
                   </Button>

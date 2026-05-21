@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { AppProvider } from './store'
 
@@ -20,6 +20,8 @@ import MyJobsPage from './pages/MyJobsPage'
 import JobModal from './components/features/JobModal'
 
 function App() {
+  const location = useLocation()
+
   return (
     <AppProvider>
       <div className="min-h-screen flex flex-col">
@@ -27,7 +29,7 @@ function App() {
 
         <main className="flex-1">
           <AnimatePresence mode="wait">
-            <Routes>
+            <Routes location={location} key={location.pathname}>
               <Route path="/" element={<HomePage />} />
               <Route path="/auth" element={<AuthPage />} />
 

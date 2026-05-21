@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Paperclip,
@@ -17,6 +17,8 @@ import { normalizeCategory } from '../utils/normalize'
 
 const CreateJobPage = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const editId = searchParams.get('edit')
 
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState({
@@ -41,6 +43,34 @@ const CreateJobPage = () => {
       setCategories(normalized)
     }).catch(console.error)
   }, [])
+
+  useEffect(() => {
+    if (editId) {
+      setLoading(true)
+      jobsApi.getById(editId)
+        .then((job) => {
+          setFormData({
+            title: job.title || '',
+            categoryId: job.categoryId || job.category || '',
+            budgetMin: String(job.budgetMin || ''),
+            budgetMax: String(job.budgetMax || ''),
+            deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : '',
+            description: job.description || '',
+            skills: Array.isArray(job.skills) ? job.skills.join(', ') : (job.skills || ''),
+            isUrgent: job.isUrgent || false,
+          })
+          const jobAttachments = Array.isArray(job.attachments)
+            ? job.attachments.map((a) => (typeof a === 'string' ? a : a.fileName))
+            : []
+          setAttachments(jobAttachments)
+        })
+        .catch((err) => {
+          console.error('Error loading job for edit:', err)
+          setErrors({ submit: 'Ошибка при загрузке задания для редактирования' })
+        })
+        .finally(() => setLoading(false))
+    }
+  }, [editId])
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -92,8 +122,13 @@ const CreateJobPage = () => {
           .filter(Boolean),
       }
       console.log('Submitting job payload:', payload)
-      await jobsApi.create(payload)
-      navigate('/jobs')
+      if (editId) {
+        await jobsApi.update(editId, payload)
+        navigate('/my-jobs')
+      } else {
+        await jobsApi.create(payload)
+        navigate('/jobs')
+      }
     } catch (err) {
       console.error('Job creation error:', err)
       console.error('Error response:', err.response)
@@ -109,10 +144,12 @@ const CreateJobPage = () => {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-            Создать задание
+            {editId ? 'Редактировать задание' : 'Создать задание'}
           </h1>
           <p className="text-lg text-gray-600">
-            Опишите ваш проект и получите отклики от специалистов
+            {editId
+              ? 'Внесите изменения в ваше задание'
+              : 'Опишите ваш проект и получите отклики от специалистов'}
           </p>
         </div>
 
@@ -324,12 +361,12 @@ const CreateJobPage = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Публикация...
+                {editId ? 'Сохранение...' : 'Публикация...'}
               </span>
             ) : (
               <>
                 <Check className="w-5 h-5 mr-2" />
-                Опубликовать задание
+                {editId ? 'Сохранить изменения' : 'Опубликовать задание'}
               </>
             )}
           </Button>

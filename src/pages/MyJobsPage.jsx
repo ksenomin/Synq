@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Briefcase, Plus, Users, Clock, DollarSign, Eye, Edit3, Trash2 } from 'lucide-react'
+import { Briefcase, Plus, Users, Clock, Eye, Edit3, Trash2 } from 'lucide-react'
 import { Card, Badge, Button } from '../components/common'
 import { jobsApi } from '../api'
 import { useAppContext } from '../store'
 import { formatBudget, formatRelativeDate } from '../utils/helpers'
+import { normalizeJob } from '../utils/normalize'
 
 const MyJobsPage = () => {
   const navigate = useNavigate()
-  const { state } = useAppContext()
+  const { state, openJobModal } = useAppContext()
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -95,7 +96,7 @@ const MyJobsPage = () => {
                 key={job.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl border-2 border-primary-200 shadow-sm overflow-hidden hover:border-primary-400 hover:shadow-md transition-all"
               >
                 <div className="p-6">
                   {/* Заголовок и статус */}
@@ -118,7 +119,7 @@ const MyJobsPage = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => navigate(`/job/${job.id}`)}
+                        onClick={() => openJobModal(normalizeJob(job))}
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Просмотр
@@ -158,7 +159,7 @@ const MyJobsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
                       <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                        <DollarSign className="w-5 h-5 text-primary-600" />
+                        <span className="text-lg font-bold text-primary-600">₽</span>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Бюджет</p>
