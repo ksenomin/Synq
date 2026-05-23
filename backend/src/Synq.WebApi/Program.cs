@@ -1,10 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Synq.Application;
 using Synq.Infrastructure;
 
@@ -16,42 +12,33 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Application
 builder.Services.AddApplication();
 
-// JWT Authentication
-var jwtSecret = builder.Configuration["Jwt:SecretKey"]
-    ?? throw new InvalidOperationException("JWT SecretKey is not configured");
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// Cookie Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
-    };
+        options.Cookie.Name = "synq_session";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+        options.LoginPath = "/auth";
+        options.AccessDeniedPath = "/auth";
 
-    // Accept token from query string for SignalR WebSocket
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
+        options.Events.OnRedirectToLogin = context =>
         {
-            var accessToken = context.Request.Query["access_token"];
-            if (!string.IsNullOrEmpty(accessToken))
+            // For API requests return 401 instead of redirect
+            if (context.Request.Path.StartsWithSegments("/api"))
             {
-                context.Token = accessToken;
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
             }
+            context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
-        }
-    };
-});
+        };
+    });
 
 // SignalR
 builder.Services.AddSignalR();
@@ -75,28 +62,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header. Example: Bearer {token}",
-        Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
+    // No JWT security definition needed for cookie auth
 });
 
 var app = builder.Build();

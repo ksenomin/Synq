@@ -15,7 +15,7 @@ const ChatMessage = ({ message, isOwn }) => {
       animate={{ opacity: 1, y: 0 }}
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-4`}
     >
-      <div className={`flex items-end gap-2 max-w-[75%] ${isOwn ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-end gap-2 max-w-[85%] sm:max-w-[75%] ${isOwn ? 'flex-row-reverse' : ''}`}>
         {/* Аватар (только для входящих) */}
         {!isOwn && (
           <Avatar

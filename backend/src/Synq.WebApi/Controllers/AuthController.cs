@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Synq.Application.DTOs;
@@ -15,15 +18,29 @@ public class AuthController : BaseController
     public AuthController(AuthService auth) => _auth = auth;
 
     /// <summary>
-    /// Registers a new user account and sends a verification email.
+    /// Registers a new user account, signs them in, and sends a verification email.
     /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken ct)
     {
         try
         {
-            var result = await _auth.RegisterAsync(request, ct);
-            return Ok(result);
+            var (user, needsVerification) = await _auth.RegisterAsync(request, ct);
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Name, user.Name),
+                new(ClaimTypes.Role, user.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            return Ok(new { user, needsVerification });
         }
         catch (InvalidOperationException ex)
         {
@@ -32,15 +49,29 @@ public class AuthController : BaseController
     }
 
     /// <summary>
-    /// Authenticates a user and returns JWT tokens.
+    /// Authenticates a user and sets an HTTP-only auth cookie.
     /// </summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
         try
         {
-            var result = await _auth.LoginAsync(request, ct);
-            return Ok(result);
+            var user = await _auth.LoginAsync(request, ct);
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Name, user.Name),
+                new(ClaimTypes.Role, user.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            return Ok(new { user });
         }
         catch (InvalidOperationException ex)
         {
@@ -59,8 +90,22 @@ public class AuthController : BaseController
 
         try
         {
-            var result = await _auth.VerifyEmailAsync(token, ct);
-            return Ok(result);
+            var user = await _auth.VerifyEmailAsync(token, ct);
+
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Name, user.Name),
+                new(ClaimTypes.Role, user.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            return Ok(new { user });
         }
         catch (InvalidOperationException ex)
         {
@@ -86,30 +131,38 @@ public class AuthController : BaseController
     }
 
     /// <summary>
-    /// Refreshes an access token using a valid refresh token.
+    /// Logs out the current user by clearing the auth cookie.
     /// </summary>
-    [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request, CancellationToken ct)
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
     {
-        try
-        {
-            var result = await _auth.RefreshTokenAsync(request.RefreshToken, ct);
-            return Ok(result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Unauthorized(new { error = ex.Message });
-        }
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Ok(new { message = "Logged out successfully" });
     }
 
     /// <summary>
-    /// Revokes a refresh token, effectively logging the user out.
+    /// Returns the currently authenticated user.
     /// </summary>
-    [HttpPost("logout")]
-    [Authorize]
-    public async Task<IActionResult> Logout([FromBody] RefreshRequest request, CancellationToken ct)
+    [HttpGet("me")]
+    public IActionResult Me()
     {
-        await _auth.RevokeTokenAsync(request.RefreshToken, ct);
-        return Ok(new { message = "Logged out successfully" });
+        if (!User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Not authenticated" });
+
+        var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+        var name = User.FindFirst(ClaimTypes.Name)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        return Ok(new
+        {
+            user = new
+            {
+                id,
+                email,
+                name,
+                role,
+            }
+        });
     }
 }

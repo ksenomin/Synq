@@ -39,11 +39,7 @@ const AuthPage = () => {
 
     try {
       const response = await authApi.login(loginForm.email, loginForm.password)
-      login({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        user: response.user,
-      })
+      login(response.user)
       navigate('/')
     } catch (err) {
       setApiError(err.response?.data?.error || 'Неверный email или пароль')
@@ -77,11 +73,7 @@ const AuthPage = () => {
         registerForm.password,
         registerForm.role
       )
-      login({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        user: response.user,
-      })
+      login(response.user)
       navigate('/')
     } catch (err) {
       setApiError(err.response?.data?.error || 'Ошибка регистрации')

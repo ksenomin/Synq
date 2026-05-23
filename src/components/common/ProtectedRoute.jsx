@@ -3,9 +3,8 @@ import { useAppContext } from '../../store'
 
 const ProtectedRoute = ({ children }) => {
   const { state } = useAppContext()
-  const token = localStorage.getItem('accessToken')
 
-  if (!state.isAuthenticated || !token) {
+  if (!state.isAuthenticated) {
     return <Navigate to="/auth" replace />
   }
 

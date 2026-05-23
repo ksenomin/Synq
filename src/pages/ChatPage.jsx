@@ -10,6 +10,7 @@ import {
   MoreVertical,
   Smile,
   Briefcase,
+  ArrowLeft,
 } from 'lucide-react'
 import { Avatar, Badge, Card, Input } from '../components/common'
 import { ChatMessage } from '../components/features'
@@ -29,6 +30,7 @@ const ChatPage = () => {
   const [messageText, setMessageText] = useState('')
   const [chatSearch, setChatSearch] = useState('')
   const [project, setProject] = useState(null)
+  const [showChat, setShowChat] = useState(false)
   const messagesEndRef = useRef(null)
 
   const activeChat = chats.find((c) => c.id === activeChatId)
@@ -46,6 +48,7 @@ const ChatPage = () => {
           const found = data?.find((c) => c.id === initialChatId)
           if (found) {
             setActiveChatId(initialChatId)
+            setShowChat(true)
           } else if (data?.length > 0 && !activeChatId) {
             setActiveChatId(data[0].id)
           }
@@ -163,8 +166,8 @@ const ChatPage = () => {
   const isOwn = (senderId) => senderId === currentUserId
 
   return (
-    <div className="h-[calc(100vh-5rem)] lg:h-[calc(100vh-6rem)] flex">
-      <div className="w-full md:w-80 lg:w-96 border-r border-gray-200 bg-white flex flex-col">
+    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] lg:h-[calc(100vh-6rem)] flex overflow-hidden">
+      <div className={`w-full md:w-80 lg:w-96 border-r border-gray-200 bg-white flex flex-col ${showChat ? 'hidden' : 'flex'} md:flex`}>
         <div className="p-4 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 mb-3">Сообщения</h2>
           <Input
@@ -190,7 +193,10 @@ const ChatPage = () => {
               return (
                 <button
                   key={chat.id}
-                  onClick={() => setActiveChatId(chat.id)}
+                  onClick={() => {
+                    setActiveChatId(chat.id)
+                    setShowChat(true)
+                  }}
                   className={`w-full flex items-start gap-3 p-4 border-b border-gray-50 transition-colors text-left ${
                     isActive
                       ? 'bg-primary-50 border-l-4 border-l-primary-600'
@@ -232,7 +238,7 @@ const ChatPage = () => {
         </div>
       </div>
 
-      <div className="hidden md:flex flex-1 flex-col">
+      <div className={`flex-1 flex-col ${showChat ? 'flex' : 'hidden'} md:flex`}>
         {chatsLoading ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full" />
@@ -241,6 +247,13 @@ const ChatPage = () => {
           <>
             <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white">
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowChat(false)}
+                  className="md:hidden p-2 -ml-2 hover:bg-gray-100 rounded-xl transition-colors"
+                  aria-label="Назад к списку"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-600" />
+                </button>
                 <Avatar
                   src={activeChat.participantAvatar || ''}
                   name={activeChat.participantName || 'Пользователь'}

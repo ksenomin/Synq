@@ -20,10 +20,10 @@ const ProposalCard = ({ proposal }) => {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         {/* Шапка: аватар + имя + рейтинг */}
-        <div className="flex items-start gap-4 mb-4">
-          <Link to={`/profile/${proposal.userSlug}`}>
+        <div className="flex items-start gap-3 sm:gap-4 mb-4">
+          <Link to={`/profile/${proposal.userSlug}`} className="shrink-0">
             <Avatar
               src={proposal.userAvatar}
               name={proposal.userName}
@@ -31,18 +31,18 @@ const ProposalCard = ({ proposal }) => {
             />
           </Link>
 
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
               <Link
                 to={`/profile/${proposal.userSlug}`}
-                className="text-lg font-bold text-gray-900 hover:text-primary-600 transition-colors"
+                className="text-base sm:text-lg font-bold text-gray-900 hover:text-primary-600 transition-colors truncate"
               >
                 {proposal.userName}
               </Link>
-              <div className="flex items-center gap-1 text-yellow-500">
-                <Star className="w-5 h-5 fill-current" />
-                <span className="font-semibold">{proposal.rating}</span>
-                <span className="text-gray-500 text-sm">
+              <div className="flex items-center gap-1 text-yellow-500 shrink-0">
+                <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                <span className="font-semibold text-sm sm:text-base">{proposal.rating}</span>
+                <span className="text-gray-500 text-xs sm:text-sm">
                   ({proposal.reviewsCount})
                 </span>
               </div>
@@ -84,16 +84,16 @@ const ProposalCard = ({ proposal }) => {
 
         {/* Кнопки действий — только для заказчиков */}
         {isClient && (
-          <div className="flex items-center gap-3">
-            <Button variant="primary" size="sm" className="flex-1">
-              <Check className="w-4 h-4 mr-2" />
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Button variant="primary" size="sm" className="flex-1 min-w-[120px]">
+              <Check className="w-4 h-4 mr-1 sm:mr-2" />
               Принять
             </Button>
-            <Button variant="secondary" size="sm" className="flex-1">
-              <MessageSquare className="w-4 h-4 mr-2" />
+            <Button variant="secondary" size="sm" className="flex-1 min-w-[120px]">
+              <MessageSquare className="w-4 h-4 mr-1 sm:mr-2" />
               Связаться
             </Button>
-            <Link to={`/profile/${proposal.userSlug}`}>
+            <Link to={`/profile/${proposal.userSlug}`} className="shrink-0">
               <Button variant="ghost" size="sm">
                 <User className="w-4 h-4" />
               </Button>

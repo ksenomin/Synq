@@ -22,10 +22,10 @@ const JobCard = ({ job }) => {
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
     >
-      <Card hoverable className="p-6 h-full flex flex-col">
+      <Card hoverable className="p-4 sm:p-6 h-full flex flex-col">
         {/* Шапка: категория и срочность */}
-        <div className="flex items-center justify-between mb-4">
-          <Badge variant={getCategoryBadgeColor(job.category)} size="sm">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <Badge variant={getCategoryBadgeColor(job.category)} size="sm" className="truncate">
             {job.categoryName}
           </Badge>
           {job.urgent && (
@@ -36,7 +36,7 @@ const JobCard = ({ job }) => {
         </div>
 
         {/* Заголовок */}
-        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+        <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2 line-clamp-2">
           {job.title}
         </h3>
 
@@ -63,21 +63,21 @@ const JobCard = ({ job }) => {
         </div>
 
         {/* Футер: бюджет, дедлайн, отклики */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-gray-100 gap-2">
           <div>
-            <p className="text-sm text-gray-500">Бюджет</p>
-            <p className="text-lg font-bold text-primary-600">
+            <p className="text-xs sm:text-sm text-gray-500">Бюджет</p>
+            <p className="text-base sm:text-lg font-bold text-primary-600">
               {formatBudgetRange(job.budget.min, job.budget.max)}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500">
             <span className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {formatRelativeDate(job.deadline)}
             </span>
             <span className="flex items-center gap-1">
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               {job.proposalsCount}
             </span>
           </div>

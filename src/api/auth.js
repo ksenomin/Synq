@@ -28,13 +28,13 @@ export const authApi = {
     return data
   },
 
-  refresh: async (refreshToken) => {
-    const { data } = await api.post('/auth/refresh', { refreshToken })
+  logout: async () => {
+    const { data } = await api.post('/auth/logout')
     return data
   },
 
-  logout: async (refreshToken) => {
-    const { data } = await api.post('/auth/logout', { refreshToken })
+  me: async () => {
+    const { data } = await api.get('/auth/me')
     return data
   },
 }

@@ -134,8 +134,8 @@ const Header = () => {
 
                 {/* Выход */}
                 <button
-                  onClick={() => {
-                    logout()
+                  onClick={async () => {
+                    await logout()
                     navigate('/')
                   }}
                   className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
@@ -238,8 +238,8 @@ const Header = () => {
                     <span>Создать задание</span>
                   </Link>
                   <button
-                    onClick={() => {
-                      logout()
+                    onClick={async () => {
+                      await logout()
                       setIsMobileMenuOpen(false)
                       navigate('/')
                     }}

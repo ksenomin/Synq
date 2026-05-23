@@ -104,7 +104,7 @@ const CategoriesPage = () => {
         </div>
 
         <div className="mt-20 text-center">
-          <p className="text-6xl lg:text-8xl font-black text-gray-100 select-none">
+          <p className="text-5xl sm:text-6xl lg:text-8xl font-black text-gray-100 select-none break-words">
             SYNQ
           </p>
           <p className="text-lg text-gray-500 mt-4">

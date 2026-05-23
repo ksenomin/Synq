@@ -216,15 +216,15 @@ const HomePage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-16"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-12 sm:mt-16"
           >
             {stats.map((stat, index) => (
-              <Card key={index} className="p-6 text-center">
-                <stat.icon className="w-8 h-8 text-primary-600 mx-auto mb-3" />
-                <p className="text-2xl lg:text-3xl font-bold text-gray-900">
+              <Card key={index} className="p-4 sm:p-6 text-center">
+                <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 text-primary-600 mx-auto mb-2 sm:mb-3" />
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                   {stat.value}
                 </p>
-                <p className="text-sm text-gray-500">{stat.label}</p>
+                <p className="text-xs sm:text-sm text-gray-500">{stat.label}</p>
               </Card>
             ))}
           </motion.div>

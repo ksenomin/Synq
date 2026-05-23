@@ -114,18 +114,18 @@ const JobProposalsPage = () => {
   return (
     <div className="py-12 lg:py-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Link to="/jobs">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-8">
+          <Link to="/jobs" className="shrink-0">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Назад
             </Button>
           </Link>
-          <div className="flex-1">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
               Отклики на задание
             </h1>
-            <p className="text-lg text-gray-600">{job.title}</p>
+            <p className="text-base sm:text-lg text-gray-600 truncate">{job.title}</p>
           </div>
         </div>
 
@@ -158,7 +158,7 @@ const JobProposalsPage = () => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
             >
-              <Card className="p-6 mb-8">
+              <Card className="p-4 sm:p-6 mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-gray-900">Фильтры</h3>
                   <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-gray-100 rounded-lg">

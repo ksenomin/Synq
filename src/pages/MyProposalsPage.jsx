@@ -143,31 +143,32 @@ const MyProposalsPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   {/* Заголовок и статус */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
                         {proposal.jobTitle}
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {getStatusBadge(proposal.status)}
                         <span className="text-sm text-gray-500">
                           Отклик отправлен {formatRelativeDate(proposal.createdAt)}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {proposal.status?.toLowerCase() === 'pending' && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleWithdraw(proposal.id)}
                           disabled={withdrawingId === proposal.id}
-                          className="text-error-600 hover:text-error-700 hover:bg-error-50"
+                          className="text-error hover:text-error hover:bg-error-50"
                         >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          {withdrawingId === proposal.id ? 'Отзыв...' : 'Отозвать'}
+                          <XCircle className="w-4 h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">{withdrawingId === proposal.id ? 'Отзыв...' : 'Отозвать'}</span>
+                          <span className="sm:hidden">{withdrawingId === proposal.id ? '...' : 'Отозвать'}</span>
                         </Button>
                       )}
                       <Button
@@ -175,19 +176,20 @@ const MyProposalsPage = () => {
                         size="sm"
                         onClick={() => handleViewJob(proposal.jobId)}
                       >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Просмотреть задание
+                        <Eye className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Просмотреть задание</span>
+                        <span className="sm:hidden">Задание</span>
                       </Button>
                     </div>
                   </div>
 
                   {/* Детали отклика */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center shrink-0">
                         <DollarSign className="w-5 h-5 text-primary-600" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm text-gray-500">Ваша ставка</p>
                         <p className="font-bold text-gray-900">
                           {formatBudget(proposal.price)}
@@ -196,10 +198,10 @@ const MyProposalsPage = () => {
                     </div>
 
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                         <Clock className="w-5 h-5 text-blue-600" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm text-gray-500">Срок выполнения</p>
                         <p className="font-bold text-gray-900">
                           {proposal.deadlineDays} дней
@@ -208,12 +210,12 @@ const MyProposalsPage = () => {
                     </div>
 
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5 text-purple-600" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm text-gray-500">Сопроводительное</p>
-                        <p className="font-bold text-gray-900 truncate max-w-[150px]">
+                        <p className="font-bold text-gray-900 truncate">
                           {proposal.coverLetter
                             ? proposal.coverLetter.substring(0, 50) + '...'
                             : 'Не указано'}
@@ -224,7 +226,7 @@ const MyProposalsPage = () => {
 
                   {/* Информация о заказчике */}
                   <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+                    <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
                       {proposal.clientAvatar ? (
                         <img
                           src={proposal.clientAvatar}
@@ -237,8 +239,8 @@ const MyProposalsPage = () => {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
                         {proposal.clientName}
                       </p>
                       <p className="text-sm text-gray-500">Заказчик</p>

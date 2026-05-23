@@ -241,8 +241,8 @@ const ProfilePage = () => {
                 </label>
               )}
             </div>
-            <div className="mt-4 lg:mt-0 flex-1">
-              <div className="flex items-center gap-3">
+            <div className="mt-4 lg:mt-0 flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{user.name}</h1>
                 {user.verified && (
                   <Badge variant="success" size="sm">
@@ -253,19 +253,15 @@ const ProfilePage = () => {
               </div>
               <p className="text-gray-600 mt-1">{getRoleName(user.role)}</p>
 
-              <div className="flex items-center gap-4 mt-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
                 <div className="flex items-center gap-1 text-yellow-500">
                   <Star className="w-5 h-5 fill-current" />
                   <span className="font-bold text-lg">{user.rating}</span>
                   <span className="text-gray-500 text-sm">({user.reviewsCount} отзывов)</span>
                 </div>
                 {!isClient && (
-                  <>
-                    <span className="text-gray-300">|</span>
-                    <span className="text-gray-600">{user.completedJobs} выполненных работ</span>
-                  </>
+                  <span className="text-gray-600">{user.completedJobs} выполненных работ</span>
                 )}
-                <span className="text-gray-300">|</span>
                 <span className="flex items-center gap-1 text-gray-600">
                   <MapPin className="w-4 h-4" />
                   {user.location || 'Не указано'}
@@ -273,7 +269,7 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-4 lg:mt-0">
+            <div className="flex gap-3 mt-4 lg:mt-0 flex-wrap">
               {isOwnProfile && (
                 <Button variant="secondary" onClick={openEdit}>
                   <Edit3 className="w-4 h-4 mr-2" />
@@ -290,32 +286,32 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        <div className={`grid grid-cols-2 ${isClient ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-4 mb-12`}>
+        <div className={`grid grid-cols-2 ${isClient ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-3 sm:gap-4 mb-12`}>
           {isClient ? (
-            <Card className="p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">{completedJobsCount}</p>
-              <p className="text-sm text-gray-500">Создано заказов</p>
+            <Card className="p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{completedJobsCount}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Создано заказов</p>
             </Card>
           ) : (
-            <Card className="p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">{user.completedJobs}</p>
-              <p className="text-sm text-gray-500">Выполнено работ</p>
+            <Card className="p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{user.completedJobs}</p>
+              <p className="text-xs sm:text-sm text-gray-500">Выполнено работ</p>
             </Card>
           )}
-          <Card className="p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">{user.reviewsCount}</p>
-            <p className="text-sm text-gray-500">Отзывов</p>
+          <Card className="p-3 sm:p-4 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{user.reviewsCount}</p>
+            <p className="text-xs sm:text-sm text-gray-500">Отзывов</p>
           </Card>
-          <Card className="p-4 text-center">
-            <p className="text-2xl font-bold text-gray-900">{user.rating}</p>
-            <p className="text-sm text-gray-500">Рейтинг</p>
+          <Card className="p-3 sm:p-4 text-center">
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{user.rating}</p>
+            <p className="text-xs sm:text-sm text-gray-500">Рейтинг</p>
           </Card>
           {!isClient && (
-            <Card className="p-4 text-center">
-              <p className="text-2xl font-bold text-gray-900">
+            <Card className="p-3 sm:p-4 text-center">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">
                 {user.hourlyRate ? formatBudget(user.hourlyRate) : '—'}
               </p>
-              <p className="text-sm text-gray-500">В час</p>
+              <p className="text-xs sm:text-sm text-gray-500">В час</p>
             </Card>
           )}
         </div>

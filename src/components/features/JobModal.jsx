@@ -114,8 +114,8 @@ const JobModal = () => {
             role="dialog"
             aria-modal="true"
           >
-            <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 shadow-2xl flex flex-col">
-              <div className="flex items-center justify-between p-6 border-b border-gray-700/50">
+            <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 shadow-2xl flex flex-col mx-2 sm:mx-4">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700/50">
                 <Badge
                   variant={getCategoryBadgeColor(selectedJob.category)}
                   size="md"
@@ -131,8 +131,8 @@ const JobModal = () => {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6">
-                <h2 className="text-2xl font-bold text-white mb-4">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">
                   {selectedJob.title}
                 </h2>
 
@@ -259,12 +259,12 @@ const JobModal = () => {
                     exit={{ height: 0, opacity: 0 }}
                     className="border-t border-gray-700/50 overflow-hidden"
                   >
-                    <div className="p-6 bg-gray-800/30">
-                      <h3 className="text-lg font-semibold text-white mb-4">
+                    <div className="p-4 sm:p-6 bg-gray-800/30">
+                      <h3 className="text-base sm:text-lg font-semibold text-white mb-4">
                         Ваше предложение
                       </h3>
-                      
-                      <div className="grid grid-cols-2 gap-4 mb-4">
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
                           <label className="block text-sm text-gray-400 mb-2">
                             Ваша цена (₽)
@@ -280,7 +280,7 @@ const JobModal = () => {
                             />
                           </div>
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm text-gray-400 mb-2">
                             Срок выполнения (дней)
@@ -297,7 +297,7 @@ const JobModal = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="mb-4">
                         <label className="block text-sm text-gray-400 mb-2">
                           Сопроводительное письмо
@@ -313,8 +313,8 @@ const JobModal = () => {
                           />
                         </div>
                       </div>
-                      
-                      <div className="flex gap-3">
+
+                      <div className="flex flex-wrap gap-2 sm:gap-3">
                         <Button
                           variant="secondary"
                           onClick={() => setShowProposalForm(false)}
@@ -326,7 +326,7 @@ const JobModal = () => {
                           variant="primary"
                           onClick={handleSubmitProposal}
                           disabled={!proposalPrice || !proposalDays || isSubmitting}
-                          className="flex-1"
+                          className="flex-1 min-w-[160px]"
                         >
                           {isSubmitting ? 'Отправка...' : 'Отправить отклик'}
                         </Button>
@@ -336,19 +336,19 @@ const JobModal = () => {
                 )}
               </AnimatePresence>
 
-              <div className="p-6 border-t border-gray-700/50 flex items-center gap-3">
+              <div className="p-4 sm:p-6 border-t border-gray-700/50 flex flex-wrap items-center gap-2 sm:gap-3">
                 {!showProposalForm && !isClient && (
                   <>
                     {userProposal && userProposal.status !== 'withdrawn' ? (
                       <div className="flex-1 flex items-center justify-between bg-success-500/10 border border-success-500/20 rounded-xl px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-5 h-5 text-success-400" />
-                          <span className="text-success-300 font-medium">
-                            Вы уже откликнулись на это задание
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CheckCircle className="w-5 h-5 text-success-400 shrink-0" />
+                          <span className="text-success-300 font-medium text-sm truncate">
+                            Вы уже откликнулись
                           </span>
                         </div>
-                        <span className="text-sm text-success-400">
-                          Статус: {userProposal.status === 'pending' ? 'На рассмотрении' : userProposal.status}
+                        <span className="text-xs text-success-400 shrink-0 ml-2">
+                          {userProposal.status === 'pending' ? 'На рассмотрении' : userProposal.status}
                         </span>
                       </div>
                     ) : (
@@ -357,12 +357,13 @@ const JobModal = () => {
                           variant="primary"
                           fullWidth
                           onClick={() => setShowProposalForm(true)}
+                          className="min-w-[140px]"
                         >
                           Откликнуться
                         </Button>
                         <Button
                           variant="secondary"
-                          className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                          className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 min-w-[140px]"
                         >
                           <MessageSquare className="w-4 h-4 mr-2" />
                           Связаться

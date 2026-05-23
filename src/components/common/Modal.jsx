@@ -60,12 +60,12 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
             aria-label={title}
           >
             <div
-              className={`w-full ${sizeClasses[size]} bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col`}
+              className={`w-full ${sizeClasses[size]} bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col mx-2 sm:mx-4`}
             >
               {/* Шапка */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100">
                 {title && (
-                  <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h2>
                 )}
                 <button
                   onClick={onClose}
@@ -77,7 +77,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'lg' }) => {
               </div>
 
               {/* Содержимое с прокруткой */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                 {children}
               </div>
             </div>

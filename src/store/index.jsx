@@ -1,4 +1,5 @@
-import { createContext, useContext, useReducer, useCallback } from 'react'
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react'
+import { authApi } from '../api'
 import { slugify } from '../utils/slug'
 
 const normalizeUser = (apiUser) => ({
@@ -17,23 +18,19 @@ const normalizeUser = (apiUser) => ({
   hourlyRate: apiUser.hourlyRate || 0,
 })
 
-const loadAuthFromStorage = () => {
+const loadUserFromStorage = () => {
   try {
-    const accessToken = localStorage.getItem('accessToken')
     const userStr = localStorage.getItem('user')
-    if (accessToken && userStr) {
-      return {
-        isAuthenticated: true,
-        currentUser: JSON.parse(userStr),
-      }
+    if (userStr) {
+      return { currentUser: JSON.parse(userStr) }
     }
   } catch {
     // ignore
   }
-  return { isAuthenticated: false, currentUser: null }
+  return { currentUser: null }
 }
 
-const authState = loadAuthFromStorage()
+const userState = loadUserFromStorage()
 
 const initialState = {
   selectedJob: null,
@@ -49,8 +46,8 @@ const initialState = {
     sortBy: 'newest',
   },
 
-  isAuthenticated: authState.isAuthenticated,
-  currentUser: authState.currentUser,
+  isAuthenticated: false,
+  currentUser: userState.currentUser,
 
   notifications: [],
 }
@@ -97,9 +94,7 @@ function appReducer(state, action) {
       return { ...state, currentUser: action.payload }
 
     case ACTIONS.LOGIN: {
-      const normalizedUser = normalizeUser(action.payload.user)
-      localStorage.setItem('accessToken', action.payload.accessToken)
-      localStorage.setItem('refreshToken', action.payload.refreshToken)
+      const normalizedUser = normalizeUser(action.payload)
       localStorage.setItem('user', JSON.stringify(normalizedUser))
       return {
         ...state,
@@ -109,8 +104,6 @@ function appReducer(state, action) {
     }
 
     case ACTIONS.LOGOUT:
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
       return { ...state, isAuthenticated: false, currentUser: null }
 
@@ -141,6 +134,19 @@ const AppContext = createContext(null)
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
 
+  useEffect(() => {
+    // Check active cookie session on mount
+    authApi.me()
+      .then((data) => {
+        if (data.user) {
+          dispatch({ type: ACTIONS.LOGIN, payload: data.user })
+        }
+      })
+      .catch(() => {
+        // Not authenticated, keep current state
+      })
+  }, [])
+
   // Мемоизированные действия
   const openJobModal = useCallback((job) => {
     dispatch({ type: ACTIONS.OPEN_JOB_MODAL, payload: job })
@@ -170,7 +176,12 @@ export function AppProvider({ children }) {
     dispatch({ type: ACTIONS.LOGIN, payload: user })
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout()
+    } catch {
+      // ignore server errors on logout
+    }
     dispatch({ type: ACTIONS.LOGOUT })
   }, [])
 

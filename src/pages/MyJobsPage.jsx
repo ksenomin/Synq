@@ -98,11 +98,11 @@ const MyJobsPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-2xl border-2 border-primary-200 shadow-sm overflow-hidden hover:border-primary-400 hover:shadow-md transition-all"
               >
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   {/* Заголовок и статус */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">
                         {job.title}
                       </h3>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -115,27 +115,29 @@ const MyJobsPage = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => openJobModal(normalizeJob(job))}
                       >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Просмотр
+                        <Eye className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Просмотр</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate(`/job/${job.id}/proposals`)}
                       >
-                        <Users className="w-4 h-4 mr-2" />
-                        Отклики ({job.proposalsCount || 0})
+                        <Users className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">Отклики</span>
+                        <span className="sm:hidden">({job.proposalsCount || 0})</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate(`/create-job?edit=${job.id}`)}
+                        aria-label="Редактировать"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -144,6 +146,7 @@ const MyJobsPage = () => {
                         size="sm"
                         className="text-error hover:text-error"
                         onClick={() => handleDeleteJob(job.id)}
+                        aria-label="Удалить"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
