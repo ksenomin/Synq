@@ -17,6 +17,7 @@ import { ChatMessage } from '../components/features'
 import { useAppContext } from '../store'
 import { chatsApi, jobsApi } from '../api'
 import { formatRelativeDate } from '../utils/helpers'
+import { normalizeJob } from '../utils/normalize'
 
 const ChatPage = () => {
   const { state } = useAppContext()
@@ -122,7 +123,9 @@ const ChatPage = () => {
 
     if (project?.id !== activeChat.jobId) {
       setProject(null)
-      jobsApi.getById(activeChat.jobId).then(setProject).catch(() => setProject(null))
+      jobsApi.getById(activeChat.jobId)
+        .then((data) => setProject(normalizeJob(data)))
+        .catch(() => setProject(null))
     }
   }, [activeChatId, activeChat?.jobId])
 
@@ -371,7 +374,7 @@ const ChatPage = () => {
             <div>
               <p className="text-gray-500">Бюджет</p>
               <p className="font-semibold text-gray-900">
-                {project.budget.min.toLocaleString('ru-RU')} — {project.budget.max.toLocaleString('ru-RU')} ₽
+                {project.budget?.min?.toLocaleString('ru-RU') ?? 0} — {project.budget?.max?.toLocaleString('ru-RU') ?? 0} ₽
               </p>
             </div>
             <div>

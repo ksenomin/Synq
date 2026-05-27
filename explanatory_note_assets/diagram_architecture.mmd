@@ -1,0 +1,29 @@
+graph TB
+  subgraph Клиентская часть
+    UI[Пользовательский интерфейс React]
+    State[Управление состоянием Context API]
+    Router[Маршрутизация React Router]
+  end
+  subgraph Серверная часть
+    API[REST API контроллеры]
+    Hub[SignalR ChatHub]
+    Auth[Аутентификация Cookie]
+    Services[Сервисы приложений]
+  end
+  subgraph Инфраструктура
+    DB[(PostgreSQL)]
+    Storage[Файловое хранилище]
+    SMTP[SMTP-сервер Mailpit]
+  end
+
+  UI --> State
+  UI --> Router
+  UI -->|HTTP + Cookie| API
+  UI -->|WebSocket| Hub
+  API --> Auth
+  API --> Services
+  Hub --> Auth
+  Hub --> Services
+  Services --> DB
+  Services --> Storage
+  Services --> SMTP

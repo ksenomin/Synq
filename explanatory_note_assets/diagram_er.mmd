@@ -1,0 +1,15 @@
+erDiagram
+  User ||--o{ Job : creates
+  User ||--o{ Proposal : submits
+  User ||--o{ Post : writes
+  User ||--o{ Review : receives
+  User ||--o{ Review : writes
+  User ||--o{ Chat : participates
+  User ||--o{ Message : sends
+  Category ||--o{ Job : contains
+  Job ||--o{ Proposal : receives
+  Job ||--o{ JobSkill : has
+  Job ||--o{ JobAttachment : has
+  Job ||--o{ Chat : linked
+  Proposal ||--o{ ProposalSkill : has
+  Chat ||--o{ Message : contains

@@ -1,0 +1,36 @@
+graph LR
+  subgraph Внешний уровень
+    Browser[Браузер]
+  end
+  subgraph Презентационный слой
+    Pages[Страницы React]
+    Components[Компоненты UI]
+  end
+  subgraph Слой API
+    Controllers[Контроллеры]
+    Hub2[SignalR Hub]
+  end
+  subgraph Слой бизнес-логики
+    AuthService[AuthService]
+    JobService[JobService]
+    ChatService[ChatService]
+    OtherServices[Прочие сервисы]
+  end
+  subgraph Слой данных
+    EF[EF Core]
+    PgSQL[(PostgreSQL)]
+  end
+
+  Browser --> Pages --> Components
+  Browser -->|REST| Controllers
+  Browser -->|WS| Hub2
+  Controllers --> AuthService
+  Controllers --> JobService
+  Controllers --> ChatService
+  Controllers --> OtherServices
+  Hub2 --> ChatService
+  AuthService --> EF
+  JobService --> EF
+  ChatService --> EF
+  OtherServices --> EF
+  EF --> PgSQL

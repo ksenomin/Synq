@@ -14,17 +14,18 @@ import {
   FileText,
   CheckCircle,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button, Badge, Avatar } from '../common'
 import { useAppContext } from '../../store'
 import { formatBudgetRange, formatDate, getCategoryBadgeColor } from '../../utils/helpers'
-import { proposalsApi } from '../../api'
+import { proposalsApi, chatsApi } from '../../api'
 import { normalizeProposal } from '../../utils/normalize'
 
 const JobModal = () => {
   const { state, closeJobModal } = useAppContext()
   const { selectedJob, isJobModalOpen, currentUser } = state
   const isClient = currentUser?.role === 'client'
+  const navigate = useNavigate()
 
   const [jobProposals, setJobProposals] = useState([])
   const [userProposal, setUserProposal] = useState(null)
@@ -33,6 +34,22 @@ const JobModal = () => {
   const [proposalDays, setProposalDays] = useState('')
   const [proposalLetter, setProposalLetter] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isContacting, setIsContacting] = useState(false)
+
+  const handleContact = async () => {
+    if (!selectedJob?.clientId) return
+    setIsContacting(true)
+    try {
+      const chat = await chatsApi.create(selectedJob.clientId, selectedJob.id)
+      navigate('/chat', { state: { chatId: chat.id } })
+      closeJobModal()
+    } catch (err) {
+      console.error('Error creating chat:', err)
+      alert('Не удалось начать чат: ' + (err.response?.data?.message || err.message))
+    } finally {
+      setIsContacting(false)
+    }
+  }
 
   useEffect(() => {
     if (selectedJob?.id && isJobModalOpen) {
@@ -362,11 +379,13 @@ const JobModal = () => {
                           Откликнуться
                         </Button>
                         <Button
-                          variant="secondary"
-                          className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 min-w-[140px]"
+                          variant="ghost"
+                          onClick={handleContact}
+                          disabled={isContacting}
+                          className="text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-700 min-w-[140px]"
                         >
                           <MessageSquare className="w-4 h-4 mr-2" />
-                          Связаться
+                          {isContacting ? 'Загрузка...' : 'Связаться'}
                         </Button>
                       </>
                     )}

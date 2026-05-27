@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { Github, Twitter, Linkedin, Mail } from 'lucide-react'
 
 /**
  * Footer — подвал сайта с ссылками, соцсетями и копирайтом
@@ -18,31 +17,13 @@ const Footer = () => {
         { label: 'Создать задание', href: '/create-job' },
       ],
     },
-    {
-      title: 'Поддержка',
-      links: [
-        { label: 'Помощь', href: '#' },
-        { label: 'FAQ', href: '#' },
-        { label: 'Контакты', href: '#' },
-        { label: 'Правила', href: '#' },
-      ],
-    },
-    {
-      title: 'Компания',
-      links: [
-        { label: 'О нас', href: '#' },
-        { label: 'Блог', href: '#' },
-        { label: 'Карьера', href: '#' },
-        { label: 'Партнёрам', href: '#' },
-      ],
-    },
   ]
 
   return (
     <footer className="bg-gray-900 text-white">
       {/* Основной контент */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
           {/* Бренд */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
@@ -55,38 +36,6 @@ const Footer = () => {
               Платформа для digital-специалистов: дизайнеров, разработчиков,
               motion-дизайнеров. Находите проекты и таланты в одном месте.
             </p>
-
-            {/* Соцсети */}
-            <div className="flex items-center gap-3">
-              <a
-                href="#"
-                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
-                aria-label="GitHub"
-              >
-                <Github className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
-                aria-label="Email"
-              >
-                <Mail className="w-5 h-5" />
-              </a>
-            </div>
           </div>
 
           {/* Ссылки */}

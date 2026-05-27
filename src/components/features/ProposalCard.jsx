@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
 import { Star, MessageSquare, User, Check } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Card, Avatar, Button, Badge } from '../common'
 import { formatBudget } from '../../utils/helpers'
 import { useAppContext } from '../../store'
+import { chatsApi } from '../../api'
+import { useState } from 'react'
 
 /**
  * Карточка отклика на задание
@@ -13,6 +15,22 @@ const ProposalCard = ({ proposal }) => {
   const { state } = useAppContext()
   const { currentUser } = state
   const isClient = currentUser?.role === 'client'
+  const navigate = useNavigate()
+  const [isContacting, setIsContacting] = useState(false)
+
+  const handleContact = async () => {
+    setIsContacting(true)
+    try {
+      const chat = await chatsApi.create(proposal.userId, proposal.jobId)
+      navigate('/chat', { state: { chatId: chat.id } })
+    } catch (err) {
+      console.error('Error creating chat:', err)
+      alert('Не удалось начать чат: ' + (err.response?.data?.message || err.message))
+    } finally {
+      setIsContacting(false)
+    }
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -89,9 +107,15 @@ const ProposalCard = ({ proposal }) => {
               <Check className="w-4 h-4 mr-1 sm:mr-2" />
               Принять
             </Button>
-            <Button variant="secondary" size="sm" className="flex-1 min-w-[120px]">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="flex-1 min-w-[120px]"
+              onClick={handleContact}
+              disabled={isContacting}
+            >
               <MessageSquare className="w-4 h-4 mr-1 sm:mr-2" />
-              Связаться
+              {isContacting ? '...' : 'Связаться'}
             </Button>
             <Link to={`/profile/${proposal.userSlug}`} className="shrink-0">
               <Button variant="ghost" size="sm">

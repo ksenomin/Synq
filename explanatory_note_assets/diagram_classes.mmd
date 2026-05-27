@@ -1,0 +1,67 @@
+classDiagram
+  class AuthController {
+    +Register(request)
+    +Login(request)
+    +VerifyEmail(token)
+    +Logout()
+    +Me()
+  }
+
+  class JobsController {
+    +GetAll(filter)
+    +GetById(id)
+    +Create(data)
+    +Update(id, data)
+    +Delete(id)
+    +GetMyJobs()
+  }
+
+  class UsersController {
+    +GetMe()
+    +GetById(id)
+    +Update(id, data)
+    +UploadAvatar(id, file)
+    +GetFreelancers(page)
+  }
+
+  class ProposalsController {
+    +GetByJobId(jobId)
+    +Create(jobId, data)
+    +UpdateStatus(id, status)
+    +Withdraw(id)
+    +GetMyProposals()
+  }
+
+  class ChatsController {
+    +GetMyChats()
+    +Create(participantId)
+    +GetMessages(chatId)
+    +SendMessage(chatId, text)
+    +MarkAsRead(chatId)
+  }
+
+  class AuthService {
+    +RegisterAsync(data)
+    +LoginAsync(email, password)
+    +VerifyEmailAsync(token)
+  }
+
+  class JobService {
+    +GetAllAsync(filter)
+    +GetByIdAsync(id)
+    +CreateAsync(data)
+    +UpdateAsync(id, data)
+    +DeleteAsync(id)
+  }
+
+  class ChatService {
+    +GetUserChatsAsync(userId)
+    +CreateChatAsync(userId, participantId)
+    +SendMessageAsync(chatId, senderId, text)
+  }
+
+  AuthController --> AuthService
+  JobsController --> JobService
+  UsersController --> UserService
+  ProposalsController --> ProposalService
+  ChatsController --> ChatService
