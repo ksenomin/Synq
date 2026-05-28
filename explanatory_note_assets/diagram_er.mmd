@@ -1,15 +1,73 @@
 erDiagram
-  User ||--o{ Job : creates
-  User ||--o{ Proposal : submits
-  User ||--o{ Post : writes
-  User ||--o{ Review : receives
-  User ||--o{ Review : writes
-  User ||--o{ Chat : participates
-  User ||--o{ Message : sends
-  Category ||--o{ Job : contains
-  Job ||--o{ Proposal : receives
-  Job ||--o{ JobSkill : has
-  Job ||--o{ JobAttachment : has
-  Job ||--o{ Chat : linked
-  Proposal ||--o{ ProposalSkill : has
-  Chat ||--o{ Message : contains
+    Users ||--o{ Jobs : creates
+    Users ||--o{ Proposals : submits
+    Users ||--o{ Posts : publishes
+    Users ||--o{ Reviews : receives
+    Users ||--o{ Reviews : writes
+    Users ||--o{ Chats : participates
+    Categories ||--o{ Jobs : contains
+    Jobs ||--o{ Proposals : has
+    Jobs ||--o{ JobSkills : requires
+    Jobs ||--o{ Chats : linked_to
+    Skills ||--o{ JobSkills : included_in
+    Skills ||--o{ ProposalSkills : specified_in
+    Proposals ||--o{ ProposalSkills : requires
+    Chats ||--o{ Messages : contains
+    Users {
+        guid Id PK
+        string Email UK
+        string PasswordHash
+        string Name
+        string Role
+        string AvatarUrl
+        string Bio
+        decimal Rating
+    }
+    Jobs {
+        guid Id PK
+        string Title
+        string Description
+        guid CategoryId FK
+        guid ClientId FK
+        decimal BudgetMin
+        decimal BudgetMax
+        string Status
+    }
+    Proposals {
+        guid Id PK
+        guid JobId FK
+        guid UserId FK
+        decimal Price
+        string CoverLetter
+        string Status
+    }
+    Categories {
+        guid Id PK
+        string Name
+        string Slug UK
+    }
+    Chats {
+        guid Id PK
+        guid UserId FK
+        guid ParticipantId FK
+        string LastMessage
+    }
+    Messages {
+        guid Id PK
+        guid ChatId FK
+        guid SenderId FK
+        string Text
+    }
+    Posts {
+        guid Id PK
+        guid UserId FK
+        string Title
+        string Content
+    }
+    Reviews {
+        guid Id PK
+        guid UserId FK
+        guid AuthorId FK
+        int Rating
+        string Text
+    }

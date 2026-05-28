@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import {
-  Search,
   Send,
   Paperclip,
   Briefcase,
@@ -13,6 +11,7 @@ import { Avatar, Badge, Card, Input } from '../components/common'
 import { ChatMessage } from '../components/features'
 import { useAppContext } from '../store'
 import { chatsApi, jobsApi } from '../api'
+import { signalRService } from '../api/signalr'
 import { formatRelativeDate } from '../utils/helpers'
 import { normalizeJob } from '../utils/normalize'
 
@@ -33,94 +32,131 @@ const ChatPage = () => {
 
   const activeChat = chats.find((c) => c.id === activeChatId)
 
-  const handleLeaveChat = useCallback(async () => {
-    if (!activeChatId) return
-    try {
-      await chatsApi.leaveChat(activeChatId)
-      setChats((prev) => prev.filter((c) => c.id !== activeChatId))
-      setActiveChatId(null)
-      setShowChat(false)
-    } catch (err) {
-      console.error('Ошибка покидания чата:', err)
-    }
-  }, [activeChatId])
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }, [])
 
-  // Загрузка списка чатов
+  const loadChats = useCallback(async (selectChatId) => {
+    try {
+      const data = await chatsApi.getMyChats()
+      setChats(data || [])
+      if (selectChatId) {
+        const found = data?.find((c) => c.id === selectChatId)
+        if (found) {
+          setActiveChatId(selectChatId)
+          setShowChat(true)
+        } else if (data?.length > 0) {
+          setActiveChat(data[0].id)
+        }
+      }
+      return data
+    } catch (err) {
+      console.error('Ошибка загрузки чатов:', err)
+      return []
+    }
+  }, [])
+
+  const loadMessages = useCallback(async (chatId) => {
+    if (!chatId) return
+    try {
+      const data = await chatsApi.getMessages(chatId)
+      const sorted = (data.items || []).sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      )
+      return sorted
+    } catch (err) {
+      console.error('Ошибка загрузки сообщений:', err)
+      return []
+    }
+  }, [])
+
+  // Начальная загрузка чатов
   useEffect(() => {
     const initialChatId = location.state?.chatId
 
-    const loadChats = async () => {
-      try {
-        const data = await chatsApi.getMyChats()
-        setChats(data || [])
+    const init = async () => {
+      const data = await loadChats(initialChatId)
+      setChatsLoading(false)
 
-        if (initialChatId) {
-          const found = data?.find((c) => c.id === initialChatId)
-          if (found) {
-            setActiveChatId(initialChatId)
-            setShowChat(true)
-          } else if (data?.length > 0 && !activeChatId) {
-            setActiveChatId(data[0].id)
-          }
-        } else if (data?.length > 0 && !activeChatId) {
-          setActiveChatId(data[0].id)
+      const chatIdToSelect = initialChatId || (data?.length > 0 ? data[0].id : null)
+      if (chatIdToSelect) {
+        const sorted = await loadMessages(chatIdToSelect)
+        if (sorted) {
+          setMessages(sorted)
+          setActiveChatId(chatIdToSelect)
+          if (initialChatId) setShowChat(true)
         }
-      } catch (err) {
-        console.error('Ошибка загрузки чатов:', err)
-        setChats([])
-      } finally {
-        setChatsLoading(false)
       }
     }
 
-    loadChats()
+    init()
   }, [location.state?.chatId])
 
-  // Polling списка чатов каждые 5 секунд
+  // SignalR подключение
   useEffect(() => {
     if (!state.isAuthenticated) return
 
-    const interval = setInterval(async () => {
-      try {
-        const data = await chatsApi.getMyChats()
-        setChats(data || [])
-      } catch (err) {
-        console.error('Ошибка обновления чатов:', err)
-      }
-    }, 5000)
+    const handlers = {
+      onMessage: (msg) => {
+        if (!msg) return
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev
+          const updated = [...prev, msg].sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          )
+          return updated
+        })
+        loadChats()
+      },
+      onChatUpdated: () => {
+        loadChats()
+      },
+      onMessagesRead: (data) => {
+        if (!data?.chatId) return
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.chatId === data.chatId ? { ...m, isRead: true } : m
+          )
+        )
+        setChats((prev) =>
+          prev.map((c) =>
+            c.id === data.chatId ? { ...c, unreadCount: 0 } : c
+          )
+        )
+      },
+      onUserOnline: () => {},
+      onUserOffline: () => {},
+      onUserTyping: () => {},
+      onReconnected: async () => {
+        await loadChats()
+        if (activeChatId) {
+          const sorted = await loadMessages(activeChatId)
+          if (sorted) setMessages(sorted)
+        }
+      },
+    }
 
-    return () => clearInterval(interval)
+    signalRService.start(handlers)
+
+    return () => {
+      signalRService.stop()
+    }
   }, [state.isAuthenticated])
 
-  // Загрузка и polling сообщений активного чата
+  // Загрузка сообщений при смене активного чата
   useEffect(() => {
     if (!activeChatId) return
 
-    const loadMessages = async () => {
-      try {
-        const data = await chatsApi.getMessages(activeChatId)
-        const sorted = (data.items || []).sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        )
-        setMessages((prev) => {
-          // Обновляем только если есть новые сообщения
-          if (JSON.stringify(prev) !== JSON.stringify(sorted)) {
-            return sorted
-          }
-          return prev
-        })
-      } catch (err) {
-        console.error('Ошибка загрузки сообщений:', err)
+    const fetchMessages = async () => {
+      const sorted = await loadMessages(activeChatId)
+      if (sorted) {
+        setMessages(sorted)
+        scrollToBottom()
       }
     }
 
-    // Загружаем сразу
-    loadMessages()
-
-    // И запускаем polling каждые 2 секунды
-    const interval = setInterval(loadMessages, 2000)
-
-    return () => clearInterval(interval)
+    fetchMessages()
+    signalRService.markAsRead(activeChatId).catch(() => {})
   }, [activeChatId])
 
   // Загрузка информации о проекте
@@ -138,34 +174,34 @@ const ChatPage = () => {
     }
   }, [activeChatId, activeChat?.jobId])
 
-  // Отметка о прочтении
-  useEffect(() => {
-    if (activeChatId) {
-      chatsApi.markAsRead(activeChatId).catch((err) => console.error('Ошибка отметки о прочтении:', err))
+  const handleLeaveChat = useCallback(async () => {
+    if (!activeChatId) return
+    try {
+      await chatsApi.leaveChat(activeChatId)
+      setChats((prev) => prev.filter((c) => c.id !== activeChatId))
+      setActiveChatId(null)
+      setShowChat(false)
+    } catch (err) {
+      console.error('Ошибка покидания чата:', err)
     }
   }, [activeChatId])
 
-  // Отправка сообщения
   const handleSendMessage = useCallback(async () => {
     if (!messageText.trim() || !activeChatId) return
-    
+
     const text = messageText.trim()
     setMessageText('')
-    
+
     try {
-      // Отправляем через API
-      await chatsApi.sendMessage(activeChatId, text)
-      
-      // Сразу обновляем список сообщений
-      const data = await chatsApi.getMessages(activeChatId)
-      const sorted = (data.items || []).sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      await signalRService.sendMessage(activeChatId, text)
+
+      setChats((prev) =>
+        prev.map((c) =>
+          c.id === activeChatId
+            ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString() }
+            : c
+        )
       )
-      setMessages(sorted)
-      
-      // Обновляем список чатов
-      const chatsData = await chatsApi.getMyChats()
-      setChats(chatsData || [])
     } catch (err) {
       console.error('Ошибка отправки сообщения:', err)
     }

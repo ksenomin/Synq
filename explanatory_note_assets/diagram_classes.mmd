@@ -1,67 +1,38 @@
 classDiagram
-  class AuthController {
-    +Register(request)
-    +Login(request)
-    +VerifyEmail(token)
-    +Logout()
-    +Me()
-  }
-
-  class JobsController {
-    +GetAll(filter)
-    +GetById(id)
-    +Create(data)
-    +Update(id, data)
-    +Delete(id)
-    +GetMyJobs()
-  }
-
-  class UsersController {
-    +GetMe()
-    +GetById(id)
-    +Update(id, data)
-    +UploadAvatar(id, file)
-    +GetFreelancers(page)
-  }
-
-  class ProposalsController {
-    +GetByJobId(jobId)
-    +Create(jobId, data)
-    +UpdateStatus(id, status)
-    +Withdraw(id)
-    +GetMyProposals()
-  }
-
-  class ChatsController {
-    +GetMyChats()
-    +Create(participantId)
-    +GetMessages(chatId)
-    +SendMessage(chatId, text)
-    +MarkAsRead(chatId)
-  }
-
-  class AuthService {
-    +RegisterAsync(data)
-    +LoginAsync(email, password)
-    +VerifyEmailAsync(token)
-  }
-
-  class JobService {
-    +GetAllAsync(filter)
-    +GetByIdAsync(id)
-    +CreateAsync(data)
-    +UpdateAsync(id, data)
-    +DeleteAsync(id)
-  }
-
-  class ChatService {
-    +GetUserChatsAsync(userId)
-    +CreateChatAsync(userId, participantId)
-    +SendMessageAsync(chatId, senderId, text)
-  }
-
-  AuthController --> AuthService
-  JobsController --> JobService
-  UsersController --> UserService
-  ProposalsController --> ProposalService
-  ChatsController --> ChatService
+    class AuthService {
+        +Register(dto) Task~AuthResult~
+        +Login(dto) Task~AuthResult~
+        +Logout() Task
+        +GetCurrentUser() Task~User~
+        +VerifyEmail(token) Task
+    }
+    class JobService {
+        +CreateJob(dto) Task~Job~
+        +GetJobs(filters) Task~PagedResult~
+        +GetJobById(id) Task~Job~
+        +UpdateJob(id, dto) Task~Job~
+        +DeleteJob(id) Task
+        +UpdateJobStatus(id, status) Task
+    }
+    class ProposalService {
+        +CreateProposal(jobId, dto) Task~Proposal~
+        +GetProposalsByJob(jobId) Task~List~
+        +UpdateProposalStatus(id, status) Task
+        +WithdrawProposal(id) Task
+    }
+    class ChatService {
+        +CreateChat(dto) Task~Chat~
+        +GetUserChats(userId) Task~List~
+        +GetMessages(chatId) Task~PagedResult~
+        +SendMessage(chatId, text) Task~Message~
+    }
+    class UserService {
+        +GetProfile(id) Task~User~
+        +UpdateProfile(id, dto) Task~User~
+        +UploadAvatar(id, file) Task
+        +GetFreelancers(filters) Task~PagedResult~
+    }
+    class ReviewService {
+        +CreateReview(dto) Task~Review~
+        +GetUserReviews(userId) Task~List~
+    }

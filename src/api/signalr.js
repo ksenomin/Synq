@@ -3,43 +3,56 @@ import * as signalR from '@microsoft/signalr'
 class SignalRService {
   constructor() {
     this.connection = null
-    this.listeners = {}
+    this.handlers = {}
     this.retryCount = 0
-    this.maxRetries = 3
+    this.maxRetries = 5
     this.retryTimeout = null
   }
 
-  async start(onMessage, onChatUpdated, onMessagesRead, onUserOnline, onUserOffline, onUserTyping) {
-    const token = localStorage.getItem('accessToken')
-    if (!token) return
+  start(handlers) {
+    this.handlers = handlers
 
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl('/chatHub', {
-        accessTokenFactory: () => token,
         skipNegotiation: false,
         transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.ServerSentEvents | signalR.HttpTransportType.LongPolling,
       })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .build()
 
-    this.connection.on('ReceiveMessage', onMessage)
-    this.connection.on('MessageSent', onMessage)
-    this.connection.on('ChatUpdated', onChatUpdated)
-    this.connection.on('MessagesRead', onMessagesRead)
-    this.connection.on('UserOnline', onUserOnline)
-    this.connection.on('UserOffline', onUserOffline)
-    this.connection.on('UserTyping', onUserTyping)
+    this.connection.on('ReceiveMessage', (msg) => this.handlers.onMessage?.(msg))
+    this.connection.on('MessageSent', (msg) => this.handlers.onMessage?.(msg))
+    this.connection.on('ChatUpdated', (data) => this.handlers.onChatUpdated?.(data))
+    this.connection.on('MessagesRead', (data) => this.handlers.onMessagesRead?.(data))
+    this.connection.on('UserOnline', (data) => this.handlers.onUserOnline?.(data))
+    this.connection.on('UserOffline', (data) => this.handlers.onUserOffline?.(data))
+    this.connection.on('UserTyping', (data) => this.handlers.onUserTyping?.(data))
 
+    this.connection.onreconnected(() => {
+      this.retryCount = 0
+      this.handlers.onReconnected?.()
+    })
+
+    return this._connect()
+  }
+
+  async _connect() {
     try {
       await this.connection.start()
       this.retryCount = 0
+      return true
     } catch (err) {
-      console.warn('Ошибка подключения SignalR, используется резервный режим:', err.message)
+      console.warn('SignalR connection error:', err.message)
       this.retryCount++
       if (this.retryCount <= this.maxRetries) {
         const delay = Math.min(2000 * Math.pow(2, this.retryCount - 1), 15000)
-        this.retryTimeout = setTimeout(() => this.start(onMessage, onChatUpdated, onMessagesRead, onUserOnline, onUserOffline, onUserTyping), delay)
+        return new Promise((resolve) => {
+          this.retryTimeout = setTimeout(() => {
+            this._connect().then(resolve)
+          }, delay)
+        })
       }
+      return false
     }
   }
 
@@ -67,10 +80,15 @@ class SignalRService {
       this.retryTimeout = null
     }
     if (this.connection) {
-      await this.connection.stop()
+      try {
+        await this.connection.stop()
+      } catch {
+        // ignore
+      }
       this.connection = null
     }
     this.retryCount = 0
+    this.handlers = {}
   }
 
   isConnected() {

@@ -1,0 +1,26 @@
+graph TB
+    subgraph Frontend["Клиентская часть (React SPA)"]
+        UI["Пользовательский интерфейс<br/>React 18 + TailwindCSS"]
+        State["Управление состоянием<br/>Context + useReducer"]
+        APIClient["API-клиент<br/>Axios + SignalR"]
+    end
+    subgraph Backend["Серверная часть (.NET 8)"]
+        WebApi["Слой представления<br/>Controllers + SignalR Hub"]
+        Application["Слой прикладной логики<br/>Сервисы + Валидация"]
+        Domain["Слой домена<br/>Сущности + Правила"]
+        Infrastructure["Слой инфраструктуры<br/>EF Core + Файловая система"]
+    end
+    subgraph Data["Слой данных"]
+        PG["PostgreSQL 16"]
+        Files["Файловое хранилище<br/>/uploads"]
+    end
+    UI --> State
+    State --> APIClient
+    APIClient -->|"HTTP REST"| WebApi
+    APIClient -->|"WebSocket"| WebApi
+    WebApi --> Application
+    Application --> Domain
+    Infrastructure --> Domain
+    Infrastructure --> PG
+    Infrastructure --> Files
+    Application -.->|"Инверсия зависимостей"| Infrastructure
