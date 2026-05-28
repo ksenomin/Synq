@@ -37,7 +37,7 @@ const JobProposalsPage = () => {
         setProposals((proposalsData || []).map((p) => normalizeProposal(p)))
       })
       .catch((err) => {
-        console.error('Error loading job proposals:', err)
+        console.error('Ошибка загрузки откликов на задание:', err)
         // Fallback to mock data
         const mockJob = jobs.find((j) => j.id === id)
         if (mockJob) {

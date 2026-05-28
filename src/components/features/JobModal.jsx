@@ -7,15 +7,13 @@ import {
   Briefcase,
   MessageSquare,
   Paperclip,
-  Star,
-  ArrowRight,
   DollarSign,
   Calendar,
   FileText,
   CheckCircle,
 } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Button, Badge, Avatar } from '../common'
+import { useNavigate } from 'react-router-dom'
+import { Button, Badge } from '../common'
 import { useAppContext } from '../../store'
 import { formatBudgetRange, formatDate, getCategoryBadgeColor } from '../../utils/helpers'
 import { proposalsApi, chatsApi } from '../../api'
@@ -44,8 +42,8 @@ const JobModal = () => {
       navigate('/chat', { state: { chatId: chat.id } })
       closeJobModal()
     } catch (err) {
-      console.error('Error creating chat:', err)
-      alert('Не удалось начать чат: ' + (err.response?.data?.message || err.message))
+      console.error('Ошибка создания чата:', err)
+      alert('Не удалось начать чат: ' + (err.response?.data?.message || 'проверьте подключение и попробуйте снова'))
     } finally {
       setIsContacting(false)
     }
@@ -101,8 +99,8 @@ const JobModal = () => {
       const currentUserProposal = proposals.find(p => p.userId === currentUser?.id)
       setUserProposal(currentUserProposal || null)
     } catch (err) {
-      console.error('Error submitting proposal:', err)
-      alert('Ошибка при отправке отклика: ' + (err.response?.data?.message || err.message))
+      console.error('Ошибка отправки отклика:', err)
+      alert('Ошибка при отправке отклика: ' + (err.response?.data?.message || 'проверьте подключение и попробуйте снова'))
     } finally {
       setIsSubmitting(false)
     }
@@ -136,6 +134,7 @@ const JobModal = () => {
                 <Badge
                   variant={getCategoryBadgeColor(selectedJob.category)}
                   size="md"
+                  className="text-white"
                 >
                   {selectedJob.categoryName}
                 </Badge>
@@ -157,10 +156,6 @@ const JobModal = () => {
                   <span className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     Дедлайн: {formatDate(selectedJob.deadline)}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    {selectedJob.proposalsCount} откликов
                   </span>
                   {selectedJob.urgent && (
                     <Badge variant="error" size="sm">
@@ -220,52 +215,7 @@ const JobModal = () => {
                   </div>
                 )}
 
-                {jobProposals.length > 0 && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-semibold text-white">
-                        Отклики ({jobProposals.length})
-                      </h3>
-                      <Link
-                        to={`/job/${selectedJob.id}/proposals`}
-                        className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1"
-                      >
-                        Все отклики
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </div>
 
-                    <div className="space-y-3">
-                      {jobProposals.slice(0, 2).map((proposal) => (
-                        <div
-                          key={proposal.id}
-                          className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-xl border border-gray-700/50"
-                        >
-                          <Avatar
-                            src={proposal.userAvatar}
-                            name={proposal.userName}
-                            size="md"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="font-medium text-white">
-                                {proposal.userName}
-                              </p>
-                              <div className="flex items-center gap-1 text-yellow-400">
-                                <Star className="w-4 h-4 fill-current" />
-                                <span className="text-sm">{proposal.rating}</span>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-400 line-clamp-2">
-                              {proposal.coverLetter}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
 
               {/* Форма отклика */}
               <AnimatePresence>
@@ -352,19 +302,20 @@ const JobModal = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
+              </div>
 
               <div className="p-4 sm:p-6 border-t border-gray-700/50 flex flex-wrap items-center gap-2 sm:gap-3">
                 {!showProposalForm && !isClient && (
                   <>
                     {userProposal && userProposal.status !== 'withdrawn' ? (
-                      <div className="flex-1 flex items-center justify-between bg-success-500/10 border border-success-500/20 rounded-xl px-4 py-3">
+                      <div className="flex-1 flex items-center justify-between bg-success/10 border border-success/20 rounded-xl px-4 py-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <CheckCircle className="w-5 h-5 text-success-400 shrink-0" />
-                          <span className="text-success-300 font-medium text-sm truncate">
+                          <CheckCircle className="w-5 h-5 text-success shrink-0" />
+                          <span className="text-white font-medium text-sm truncate">
                             Вы уже откликнулись
                           </span>
                         </div>
-                        <span className="text-xs text-success-400 shrink-0 ml-2">
+                        <span className="text-xs text-success shrink-0 ml-2">
                           {userProposal.status === 'pending' ? 'На рассмотрении' : userProposal.status}
                         </span>
                       </div>

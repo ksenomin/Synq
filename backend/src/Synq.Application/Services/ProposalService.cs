@@ -121,6 +121,7 @@ public class ProposalService
     {
         var proposal = await _context.Proposals
             .Include(p => p.Job)
+            .ThenInclude(j => j!.Client)
             .Include(p => p.User)
             .Include(p => p.ProposalSkills)
             .FirstOrDefaultAsync(p => p.Id == id, ct)

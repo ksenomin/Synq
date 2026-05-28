@@ -121,6 +121,40 @@ export function getRoleName(role) {
 }
 
 /**
+ * Переводит распространённые английские ошибки API на русский
+ */
+const API_ERROR_TRANSLATIONS = {
+  'Invalid email or password': 'Неверный email или пароль',
+  'Invalid credentials': 'Неверный email или пароль',
+  'User not found': 'Пользователь не найден',
+  'Email already exists': 'Этот email уже зарегистрирован',
+  'Email already in use': 'Этот email уже используется',
+  'Password must be at least 6 characters': 'Пароль должен содержать минимум 6 символов',
+  'Password is required': 'Введите пароль',
+  'Name is required': 'Введите имя',
+  'Email is required': 'Введите email',
+  'Unauthorized': 'Необходимо авторизоваться',
+  'Forbidden': 'Доступ запрещён',
+  'Not found': 'Не найдено',
+  'Internal server error': 'Внутренняя ошибка сервера',
+  'Bad request': 'Некорректный запрос',
+}
+
+export function translateApiError(message) {
+  if (typeof message === 'string') {
+    const normalized = message.trim()
+    return API_ERROR_TRANSLATIONS[normalized] || normalized
+  }
+  if (Array.isArray(message)) {
+    return message.map(translateApiError).filter(Boolean).join(', ')
+  }
+  if (message && typeof message === 'object') {
+    return translateApiError(message.message) || JSON.stringify(message)
+  }
+  return ''
+}
+
+/**
  * Преобразует текст в URL-безопасный slug (транслитерация)
  */
 export { slugify } from './slug'

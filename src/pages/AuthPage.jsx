@@ -5,6 +5,7 @@ import { Mail, Lock, User, Briefcase, ArrowRight } from 'lucide-react'
 import { Button, Input, Card } from '../components/common'
 import { useAppContext } from '../store'
 import { authApi } from '../api'
+import { translateApiError } from '../utils/helpers'
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState('login')
@@ -42,7 +43,9 @@ const AuthPage = () => {
       login(response.user)
       navigate('/')
     } catch (err) {
-      setApiError(err.response?.data?.error || 'Неверный email или пароль')
+      console.error('Ошибка входа — статус:', err.response?.status)
+      console.error('Ошибка входа — данные:', err.response?.data)
+      setApiError(translateApiError(err.response?.data?.error) || 'Неверный email или пароль')
     } finally {
       setLoading(false)
     }
@@ -76,7 +79,7 @@ const AuthPage = () => {
       login(response.user)
       navigate('/')
     } catch (err) {
-      setApiError(err.response?.data?.error || 'Ошибка регистрации')
+      setApiError(translateApiError(err.response?.data?.error) || 'Ошибка регистрации')
     } finally {
       setLoading(false)
     }
@@ -105,9 +108,11 @@ const AuthPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">S</span>
-          </div>
+          <img
+            src="/synq-logo.jpg"
+            alt="SYNQ"
+            className="h-14 w-auto rounded-2xl object-contain mx-auto mb-4"
+          />
           <h1 className="text-2xl font-bold text-gray-900">
             {activeTab === 'login' ? 'Вход в SYNQ' : 'Регистрация в SYNQ'}
           </h1>

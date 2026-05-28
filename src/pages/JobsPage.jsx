@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -15,7 +15,7 @@ import { jobsApi, categoriesApi } from '../api'
 import { normalizeJob, normalizeCategory } from '../utils/normalize'
 
 const JobsPage = () => {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const { state, openJobModal, setJobFilters, resetJobFilters } = useAppContext()
   const jobFilters = state.jobFilters
@@ -27,28 +27,34 @@ const JobsPage = () => {
   const [totalCount, setTotalCount] = useState(0)
 
   const [localFilters, setLocalFilters] = useState(jobFilters)
+  const hasSyncedUrl = useRef(false)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
-    const urlSearch = params.get('search')
-    if (urlSearch && urlSearch !== jobFilters.search) {
-      setJobFilters({ search: urlSearch })
-      setLocalFilters((prev) => ({ ...prev, search: urlSearch }))
+    const urlSearch = params.get('search') || ''
+    const urlCategory = params.get('category') || null
+
+    const updates = {}
+    if (urlSearch !== jobFilters.search) updates.search = urlSearch
+    if (urlCategory !== jobFilters.category) updates.category = urlCategory
+
+    if (Object.keys(updates).length > 0) {
+      setJobFilters(updates)
+      setLocalFilters((prev) => ({ ...prev, ...updates }))
+    } else {
+      hasSyncedUrl.current = true
     }
-    const urlCategory = params.get('category')
-    if (urlCategory && urlCategory !== jobFilters.category) {
-      setJobFilters({ category: urlCategory })
-      setLocalFilters((prev) => ({ ...prev, category: urlCategory }))
-    }
-  }, [location.search])
+  }, [location.search, jobFilters, setJobFilters, setLocalFilters])
 
   useEffect(() => {
     categoriesApi.getAll().then((data) => {
       setCategories(data.map((c) => normalizeCategory(c)))
-    }).catch(console.error)
+    }).catch((err) => console.error('Ошибка загрузки категорий:', err))
   }, [])
 
   useEffect(() => {
+    if (!hasSyncedUrl.current) return
+
     const params = {
       page: 1,
       pageSize: 50,
@@ -63,7 +69,7 @@ const JobsPage = () => {
     jobsApi.getAll(params).then((data) => {
       setJobs(data.items.map((j) => normalizeJob(j)))
       setTotalCount(data.totalCount)
-    }).catch(console.error).finally(() => setLoading(false))
+    }).catch((err) => console.error('Ошибка загрузки заданий:', err)).finally(() => setLoading(false))
   }, [jobFilters])
 
   const categoryPills = [
@@ -116,6 +122,13 @@ const JobsPage = () => {
               <button
                 key={pill.slug || 'all'}
                 onClick={() => {
+                  const nextParams = new URLSearchParams(searchParams)
+                  if (pill.slug) {
+                    nextParams.set('category', pill.slug)
+                  } else {
+                    nextParams.delete('category')
+                  }
+                  setSearchParams(nextParams)
                   setLocalFilters((prev) => ({ ...prev, category: pill.slug }))
                   setJobFilters({ category: pill.slug })
                 }}

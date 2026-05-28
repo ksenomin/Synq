@@ -38,7 +38,7 @@ const HomePage = () => {
       setFeaturedJobs((jobsData.items || []).map((j) => normalizeJob(j)))
       setCategories(categoriesData.map((c) => normalizeCategory(c)))
       setFeaturedSpecialists((freelancersData.items || []).map((u) => normalizeUser(u)))
-    }).catch(console.error).finally(() => setLoading(false))
+    }).catch((err) => console.error('Ошибка загрузки данных главной страницы:', err)).finally(() => setLoading(false))
   }, [])
 
   const stats = [

@@ -26,13 +26,13 @@ import { PostCard } from '../components/features'
 import { usersApi, postsApi, reviewsApi, chatsApi } from '../api'
 import { useAppContext } from '../store'
 import { normalizeUser } from '../utils/normalize'
-import { formatBudget, getRoleName } from '../utils/helpers'
+import { formatBudget, getRoleName, translateApiError } from '../utils/helpers'
 import { jobs } from '../data/jobs'
 
 const ProfilePage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { state } = useAppContext()
+  const { state, setCurrentUser } = useAppContext()
   const currentUserId = state.currentUser?.id
 
   const [user, setUser] = useState(null)
@@ -83,7 +83,7 @@ const ProfilePage = () => {
     }).then(([postsData, reviewsData]) => {
       setPosts(Array.isArray(postsData?.items) ? postsData.items : [])
       setReviews(Array.isArray(reviewsData) ? reviewsData : [])
-    }).catch(console.error).finally(() => setLoading(false))
+    }).catch((err) => console.error('Ошибка загрузки профиля:', err)).finally(() => setLoading(false))
   }, [id])
 
   const openEdit = () => {
@@ -111,10 +111,23 @@ const ProfilePage = () => {
         portfolioUrl: editForm.portfolioUrl || null,
         yearsOfExperience: editForm.yearsOfExperience ? Number(editForm.yearsOfExperience) : null,
       })
-      setUser(normalizeUser(updated))
+      const normalized = normalizeUser(updated)
+      setUser(normalized)
       setIsEditOpen(false)
+      if (isOwnProfile && state.currentUser) {
+        setCurrentUser({
+          ...state.currentUser,
+          name: normalized.name,
+          slug: normalized.slug,
+          bio: normalized.bio,
+          location: normalized.location,
+          hourlyRate: normalized.hourlyRate,
+          portfolioUrl: normalized.portfolioUrl,
+          yearsOfExperience: normalized.yearsOfExperience,
+        })
+      }
     } catch (err) {
-      setEditError(err.response?.data?.error || 'Ошибка при сохранении')
+      setEditError(translateApiError(err.response?.data?.error) || 'Ошибка при сохранении')
     } finally {
       setEditLoading(false)
     }
@@ -126,9 +139,13 @@ const ProfilePage = () => {
     setUploadLoading(true)
     try {
       const updated = await usersApi.uploadAvatar(user.id, file)
-      setUser(normalizeUser(updated))
+      const normalized = normalizeUser(updated)
+      setUser(normalized)
+      if (isOwnProfile && state.currentUser) {
+        setCurrentUser({ ...state.currentUser, avatar: normalized.avatar })
+      }
     } catch (err) {
-      console.error('Avatar upload error:', err)
+      console.error('Ошибка загрузки аватара:', err)
     } finally {
       setUploadLoading(false)
     }
@@ -140,9 +157,13 @@ const ProfilePage = () => {
     setUploadLoading(true)
     try {
       const updated = await usersApi.uploadCover(user.id, file)
-      setUser(normalizeUser(updated))
+      const normalized = normalizeUser(updated)
+      setUser(normalized)
+      if (isOwnProfile && state.currentUser) {
+        setCurrentUser({ ...state.currentUser, cover: normalized.cover })
+      }
     } catch (err) {
-      console.error('Cover upload error:', err)
+      console.error('Ошибка загрузки обложки:', err)
     } finally {
       setUploadLoading(false)
     }
@@ -168,7 +189,7 @@ const ProfilePage = () => {
       const postsData = await postsApi.getByUserId(user.id)
       setPosts(Array.isArray(postsData?.items) ? postsData.items : [])
     } catch (err) {
-      setPostError(err.response?.data?.error || 'Ошибка при создании публикации')
+      setPostError(translateApiError(err.response?.data?.error) || 'Ошибка при создании публикации')
     } finally {
       setPostLoading(false)
     }
@@ -180,7 +201,7 @@ const ProfilePage = () => {
       const chat = await chatsApi.create(user.id)
       navigate('/chat', { state: { chatId: chat.id } })
     } catch (err) {
-      console.error('Failed to create chat:', err)
+      console.error('Не удалось создать чат:', err)
       navigate('/chat')
     }
   }

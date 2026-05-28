@@ -82,4 +82,22 @@ public class ChatsController : BaseController
         await _service.MarkAsReadAsync(id, GetCurrentUserId(), ct);
         return Ok(new { message = "Marked as read" });
     }
+
+    /// <summary>
+    /// Leaves a chat conversation.
+    /// </summary>
+    [HttpPost("{id:guid}/leave")]
+    [Authorize]
+    public async Task<IActionResult> Leave(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            await _service.LeaveAsync(id, GetCurrentUserId(), ct);
+            return Ok(new { message = "Left chat" });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
 }

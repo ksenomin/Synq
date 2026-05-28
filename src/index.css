@@ -13,6 +13,16 @@
     @apply bg-gray-50 text-gray-900 overflow-x-hidden;
   }
 
+  /* Hide browser-native password reveal button (Edge/Chrome on Windows) */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
+  input[type="password"]::-webkit-textfield-decoration-container {
+    display: none !important;
+  }
+
   /* Кастомный скроллбар */
   ::-webkit-scrollbar {
     width: 8px;

@@ -14,6 +14,7 @@ import {
 import { Button, Input, Card, Badge } from '../components/common'
 import { categoriesApi, jobsApi } from '../api'
 import { normalizeCategory } from '../utils/normalize'
+import { translateApiError } from '../utils/helpers'
 
 const CreateJobPage = () => {
   const navigate = useNavigate()
@@ -37,11 +38,11 @@ const CreateJobPage = () => {
 
   useEffect(() => {
     categoriesApi.getAll().then((data) => {
-      console.log('Categories API response:', data)
+      console.log('Ответ API категорий:', data)
       const normalized = data.map((c) => normalizeCategory(c))
-      console.log('Normalized categories:', normalized)
+      console.log('Нормализованные категории:', normalized)
       setCategories(normalized)
-    }).catch(console.error)
+    }).catch((err) => console.error('Ошибка загрузки категорий:', err))
   }, [])
 
   useEffect(() => {
@@ -65,7 +66,7 @@ const CreateJobPage = () => {
           setAttachments(jobAttachments)
         })
         .catch((err) => {
-          console.error('Error loading job for edit:', err)
+          console.error('Ошибка загрузки задания для редактирования:', err)
           setErrors({ submit: 'Ошибка при загрузке задания для редактирования' })
         })
         .finally(() => setLoading(false))
@@ -121,7 +122,7 @@ const CreateJobPage = () => {
           .map((s) => s.trim())
           .filter(Boolean),
       }
-      console.log('Submitting job payload:', payload)
+      console.log('Отправка данных задания:', payload)
       if (editId) {
         await jobsApi.update(editId, payload)
         navigate('/my-jobs')
@@ -130,10 +131,10 @@ const CreateJobPage = () => {
         navigate('/jobs')
       }
     } catch (err) {
-      console.error('Job creation error:', err)
-      console.error('Error response:', err.response)
-      console.error('Error response data:', err.response?.data)
-      setErrors({ submit: err.response?.data?.error || err.response?.data?.title || err.response?.data?.message || 'Ошибка при создании задания' })
+      console.error('Ошибка создания задания:', err)
+      console.error('Ответ ошибки:', err.response)
+      console.error('Данные ответа ошибки:', err.response?.data)
+      setErrors({ submit: translateApiError(err.response?.data?.error) || err.response?.data?.title || err.response?.data?.message || 'Ошибка при создании задания' })
     } finally {
       setLoading(false)
     }
@@ -190,7 +191,7 @@ const CreateJobPage = () => {
                       key={cat.id}
                       type="button"
                       onClick={() => {
-                      console.log('Selected category:', cat.name, 'with id:', cat.id)
+                      console.log('Выбрана категория:', cat.name, 'с id:', cat.id)
                       handleChange('categoryId', cat.id)
                     }}
                       className={`p-3 rounded-xl border text-sm font-medium transition-colors text-left ${

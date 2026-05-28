@@ -21,7 +21,7 @@ const MyJobsPage = () => {
         setJobs(data.items || [])
       })
       .catch((err) => {
-        console.error('Error fetching my jobs:', err)
+        console.error('Ошибка получения моих заданий:', err)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -43,7 +43,7 @@ const MyJobsPage = () => {
         await jobsApi.delete(jobId)
         setJobs(jobs.filter((job) => job.id !== jobId))
       } catch (err) {
-        console.error('Error deleting job:', err)
+        console.error('Ошибка удаления задания:', err)
         alert('Ошибка при удалении задания')
       }
     }

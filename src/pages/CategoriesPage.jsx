@@ -34,7 +34,7 @@ const CategoriesPage = () => {
       normalized[0].span = 'md:col-span-2'
       normalized[3].span = 'md:col-span-2'
       setCategories(normalized)
-    }).catch(console.error).finally(() => setLoading(false))
+    }).catch((err) => console.error('Ошибка загрузки категорий:', err)).finally(() => setLoading(false))
   }, [])
 
   if (loading) {

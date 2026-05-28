@@ -24,8 +24,8 @@ const ProposalCard = ({ proposal }) => {
       const chat = await chatsApi.create(proposal.userId, proposal.jobId)
       navigate('/chat', { state: { chatId: chat.id } })
     } catch (err) {
-      console.error('Error creating chat:', err)
-      alert('Не удалось начать чат: ' + (err.response?.data?.message || err.message))
+      console.error('Ошибка создания чата:', err)
+      alert('Не удалось начать чат: ' + (err.response?.data?.message || 'проверьте подключение и попробуйте снова'))
     } finally {
       setIsContacting(false)
     }

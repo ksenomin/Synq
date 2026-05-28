@@ -47,6 +47,7 @@ const initialState = {
   },
 
   isAuthenticated: false,
+  isAuthLoading: true,
   currentUser: userState.currentUser,
 
   notifications: [],
@@ -91,21 +92,41 @@ function appReducer(state, action) {
       }
 
     case ACTIONS.SET_CURRENT_USER:
+      if (action.payload) {
+        localStorage.setItem('user', JSON.stringify(action.payload))
+      }
       return { ...state, currentUser: action.payload }
 
     case ACTIONS.LOGIN: {
       const normalizedUser = normalizeUser(action.payload)
-      localStorage.setItem('user', JSON.stringify(normalizedUser))
+      const existingUser = state.currentUser || {}
+
+      // Preserve avatar/cover if API omitted them (e.g. /auth/me lite response)
+      const payloadHasAvatar = action.payload && (
+        'avatarUrl' in action.payload || 'avatar' in action.payload
+      )
+      const payloadHasCover = action.payload && (
+        'coverUrl' in action.payload || 'cover' in action.payload
+      )
+
+      const mergedUser = {
+        ...normalizedUser,
+        avatar: payloadHasAvatar ? normalizedUser.avatar : (existingUser.avatar || normalizedUser.avatar),
+        cover: payloadHasCover ? normalizedUser.cover : (existingUser.cover || normalizedUser.cover),
+      }
+
+      localStorage.setItem('user', JSON.stringify(mergedUser))
       return {
         ...state,
         isAuthenticated: true,
-        currentUser: normalizedUser,
+        isAuthLoading: false,
+        currentUser: mergedUser,
       }
     }
 
     case ACTIONS.LOGOUT:
       localStorage.removeItem('user')
-      return { ...state, isAuthenticated: false, currentUser: null }
+      return { ...state, isAuthenticated: false, isAuthLoading: false, currentUser: null }
 
     case ACTIONS.ADD_NOTIFICATION:
       return {
@@ -140,10 +161,15 @@ export function AppProvider({ children }) {
       .then((data) => {
         if (data.user) {
           dispatch({ type: ACTIONS.LOGIN, payload: data.user })
+        } else {
+          dispatch({ type: ACTIONS.LOGOUT })
         }
       })
-      .catch(() => {
-        // Not authenticated, keep current state
+      .catch((err) => {
+        if (err.response?.status >= 500) {
+          console.error('Ошибка сервера при проверке сессии:', err.response.status, err.response.data)
+        }
+        dispatch({ type: ACTIONS.LOGOUT })
       })
   }, [])
 
@@ -217,7 +243,7 @@ export function AppProvider({ children }) {
 export function useAppContext() {
   const context = useContext(AppContext)
   if (!context) {
-    throw new Error('useAppContext must be used within AppProvider')
+    throw new Error('useAppContext должен использоваться внутри AppProvider')
   }
   return context
 }

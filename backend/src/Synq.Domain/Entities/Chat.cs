@@ -11,6 +11,11 @@ public class Chat
     public int UnreadCount { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    public bool IsLeftByUser { get; set; }
+    public bool IsLeftByParticipant { get; set; }
+    public DateTime? LeftAtByUser { get; set; }
+    public DateTime? LeftAtByParticipant { get; set; }
+
     public User User { get; set; } = null!;
     public User Participant { get; set; } = null!;
     public Job? Job { get; set; }

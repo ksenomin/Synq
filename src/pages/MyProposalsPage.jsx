@@ -28,7 +28,7 @@ const MyProposalsPage = () => {
         setProposals(data.items || [])
       })
       .catch((err) => {
-        console.error('Error fetching proposals:', err)
+        console.error('Ошибка получения откликов:', err)
         showNotification('Ошибка загрузки откликов', 'error')
       })
       .finally(() => setLoading(false))
@@ -48,7 +48,7 @@ const MyProposalsPage = () => {
       // Обновляем список
       loadProposals()
     } catch (err) {
-      console.error('Error withdrawing proposal:', err)
+      console.error('Ошибка отзыва отклика:', err)
       showNotification('Ошибка при отзыве отклика', 'error')
     } finally {
       setWithdrawingId(null)
@@ -62,7 +62,7 @@ const MyProposalsPage = () => {
         openJobModal(normalizeJob(jobData))
       }
     } catch (err) {
-      console.error('Error loading job:', err)
+      console.error('Ошибка загрузки задания:', err)
       showNotification('Ошибка загрузки задания', 'error')
     }
   }

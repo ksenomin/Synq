@@ -25,4 +25,9 @@ export const chatsApi = {
     const { data } = await api.post(`/chats/${chatId}/read`)
     return data
   },
+
+  leaveChat: async (chatId) => {
+    const { data } = await api.post(`/chats/${chatId}/leave`)
+    return data
+  },
 }

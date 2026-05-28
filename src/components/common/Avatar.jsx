@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { getInitials } from '../../utils/helpers'
 
@@ -11,6 +11,10 @@ const Avatar = ({
   className,
 }) => {
   const [error, setError] = useState(false)
+
+  useEffect(() => {
+    setError(false)
+  }, [src])
 
   const sizeClasses = {
     sm: 'w-8 h-8 text-xs',

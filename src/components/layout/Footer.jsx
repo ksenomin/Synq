@@ -27,10 +27,11 @@ const Footer = () => {
           {/* Бренд */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
-                <span className="text-white font-bold text-xl">S</span>
-              </div>
-              <span className="text-xl font-bold">SYNQ</span>
+              <img
+                src="/synq-logo.jpg"
+                alt="SYNQ"
+                className="h-10 w-auto rounded-xl object-contain"
+              />
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm">
               Платформа для digital-специалистов: дизайнеров, разработчиков,

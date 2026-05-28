@@ -5,12 +5,9 @@ import {
   Search,
   Send,
   Paperclip,
-  Phone,
-  Video,
-  MoreVertical,
-  Smile,
   Briefcase,
   ArrowLeft,
+  LogOut,
 } from 'lucide-react'
 import { Avatar, Badge, Card, Input } from '../components/common'
 import { ChatMessage } from '../components/features'
@@ -36,6 +33,18 @@ const ChatPage = () => {
 
   const activeChat = chats.find((c) => c.id === activeChatId)
 
+  const handleLeaveChat = useCallback(async () => {
+    if (!activeChatId) return
+    try {
+      await chatsApi.leaveChat(activeChatId)
+      setChats((prev) => prev.filter((c) => c.id !== activeChatId))
+      setActiveChatId(null)
+      setShowChat(false)
+    } catch (err) {
+      console.error('Ошибка покидания чата:', err)
+    }
+  }, [activeChatId])
+
   // Загрузка списка чатов
   useEffect(() => {
     const initialChatId = location.state?.chatId
@@ -57,7 +66,7 @@ const ChatPage = () => {
           setActiveChatId(data[0].id)
         }
       } catch (err) {
-        console.error('Error loading chats:', err)
+        console.error('Ошибка загрузки чатов:', err)
         setChats([])
       } finally {
         setChatsLoading(false)
@@ -76,7 +85,7 @@ const ChatPage = () => {
         const data = await chatsApi.getMyChats()
         setChats(data || [])
       } catch (err) {
-        console.error('Error polling chats:', err)
+        console.error('Ошибка обновления чатов:', err)
       }
     }, 5000)
 
@@ -101,7 +110,7 @@ const ChatPage = () => {
           return prev
         })
       } catch (err) {
-        console.error('Error loading messages:', err)
+        console.error('Ошибка загрузки сообщений:', err)
       }
     }
 
@@ -132,7 +141,7 @@ const ChatPage = () => {
   // Отметка о прочтении
   useEffect(() => {
     if (activeChatId) {
-      chatsApi.markAsRead(activeChatId).catch(console.error)
+      chatsApi.markAsRead(activeChatId).catch((err) => console.error('Ошибка отметки о прочтении:', err))
     }
   }, [activeChatId])
 
@@ -158,7 +167,7 @@ const ChatPage = () => {
       const chatsData = await chatsApi.getMyChats()
       setChats(chatsData || [])
     } catch (err) {
-      console.error('Error sending message:', err)
+      console.error('Ошибка отправки сообщения:', err)
     }
   }, [messageText, activeChatId])
 
@@ -272,14 +281,13 @@ const ChatPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors" aria-label="Позвонить">
-                  <Phone className="w-5 h-5 text-gray-500" />
-                </button>
-                <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors" aria-label="Видеозвонок">
-                  <Video className="w-5 h-5 text-gray-500" />
-                </button>
-                <button className="p-2 hover:bg-gray-100 rounded-xl transition-colors" aria-label="Ещё">
-                  <MoreVertical className="w-5 h-5 text-gray-500" />
+                <button
+                  onClick={handleLeaveChat}
+                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-error-600"
+                  title="Покинуть чат"
+                  aria-label="Покинуть чат"
+                >
+                  <LogOut className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -329,9 +337,6 @@ const ChatPage = () => {
                     placeholder="Напишите сообщение..."
                     className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-500 transition-all"
                   />
-                  <button className="absolute right-3 top-1/2 -translate-y-1/2" aria-label="Эмодзи">
-                    <Smile className="w-5 h-5 text-gray-400" />
-                  </button>
                 </div>
                 <button
                   onClick={handleSendMessage}

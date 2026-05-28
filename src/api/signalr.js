@@ -34,7 +34,7 @@ class SignalRService {
       await this.connection.start()
       this.retryCount = 0
     } catch (err) {
-      console.warn('SignalR connection failed, using fallback mode:', err.message)
+      console.warn('Ошибка подключения SignalR, используется резервный режим:', err.message)
       this.retryCount++
       if (this.retryCount <= this.maxRetries) {
         const delay = Math.min(2000 * Math.pow(2, this.retryCount - 1), 15000)

@@ -20,7 +20,9 @@ public class ChatService
         await _context.Chats
             .Include(c => c.Participant)
             .Include(c => c.Job)
-            .Where(c => c.UserId == userId || c.ParticipantId == userId)
+            .Where(c =>
+                (c.UserId == userId && !c.IsLeftByUser) ||
+                (c.ParticipantId == userId && !c.IsLeftByParticipant))
             .OrderByDescending(c => c.LastMessageAt)
             .Select(c => new ChatDto
             {
@@ -48,7 +50,20 @@ public class ChatService
                 (c.UserId == request.ParticipantId && c.ParticipantId == userId), ct);
 
         if (existing != null)
+        {
+            if (existing.UserId == userId && existing.IsLeftByUser)
+            {
+                existing.IsLeftByUser = false;
+                existing.LeftAtByUser = null;
+            }
+            else if (existing.ParticipantId == userId && existing.IsLeftByParticipant)
+            {
+                existing.IsLeftByParticipant = false;
+                existing.LeftAtByParticipant = null;
+            }
+            await _context.SaveChangesAsync(ct);
             return await GetDtoAsync(existing.Id, ct);
+        }
 
         var chat = new Domain.Entities.Chat
         {
@@ -120,8 +135,24 @@ public class ChatService
 
         chat.LastMessage = text;
         chat.LastMessageAt = DateTime.UtcNow;
+
         if (chat.UserId != senderId)
+        {
             chat.UnreadCount++;
+            if (chat.IsLeftByUser)
+            {
+                chat.IsLeftByUser = false;
+                chat.LeftAtByUser = null;
+            }
+        }
+        else
+        {
+            if (chat.IsLeftByParticipant)
+            {
+                chat.IsLeftByParticipant = false;
+                chat.LeftAtByParticipant = null;
+            }
+        }
 
         await _context.SaveChangesAsync(ct);
 
@@ -149,6 +180,29 @@ public class ChatService
             chat.UnreadCount = 0;
             await _context.SaveChangesAsync(ct);
         }
+    }
+
+    /// <summary>
+    /// Allows the current user to leave a chat.
+    /// </summary>
+    public async Task LeaveAsync(Guid chatId, Guid userId, CancellationToken ct = default)
+    {
+        var chat = await _context.Chats.FindAsync(new object[] { chatId }, cancellationToken: ct);
+        if (chat == null || (chat.UserId != userId && chat.ParticipantId != userId))
+            throw new UnauthorizedAccessException("Access denied");
+
+        if (chat.UserId == userId)
+        {
+            chat.IsLeftByUser = true;
+            chat.LeftAtByUser = DateTime.UtcNow;
+        }
+        else if (chat.ParticipantId == userId)
+        {
+            chat.IsLeftByParticipant = true;
+            chat.LeftAtByParticipant = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(ct);
     }
 
     private async Task<ChatDto> GetDtoAsync(Guid chatId, CancellationToken ct)

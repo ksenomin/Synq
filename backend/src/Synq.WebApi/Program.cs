@@ -123,27 +123,8 @@ async Task SeedDataAsync(Synq.Infrastructure.Data.AppDbContext ctx, IServiceProv
         ctx.Users.AddRange(client, freelancer);
         await ctx.SaveChangesAsync();
     }
-    else
-    {
-        // Update existing users: set known password, verify, and set avatars if missing
-        var existingUsers = ctx.Users.ToList();
-        var avatarIndex = 1;
-        foreach (var user in existingUsers)
-        {
-            user.PasswordHash = passwordHash;
-            user.IsVerified = true;
-            if (string.IsNullOrEmpty(user.AvatarUrl))
-            {
-                user.AvatarUrl = $"https://i.pravatar.cc/150?u={avatarIndex}";
-                avatarIndex++;
-            }
-            if (user.Name == "Алексей Петров" && string.IsNullOrEmpty(user.CoverUrl))
-            {
-                user.CoverUrl = "https://images.unsplash.com/photo-1558655146-d09347e92766?w=1200&h=400&fit=crop";
-            }
-        }
-        await ctx.SaveChangesAsync();
-    }
+    // Seed data block intentionally left empty to avoid auto-assigning mock avatars
+    // to newly registered users on subsequent application starts.
 
     if (!ctx.Categories.Any())
     {
