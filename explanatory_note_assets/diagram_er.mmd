@@ -4,10 +4,15 @@ erDiagram
     Users ||--o{ Posts : publishes
     Users ||--o{ Reviews : receives
     Users ||--o{ Reviews : writes
+    Users ||--o{ Chats : initiates
     Users ||--o{ Chats : participates
+    Users ||--o{ Messages : sends
+    Users ||--o{ RefreshTokens : owns
+    Users ||--o{ EmailVerificationTokens : owns
     Categories ||--o{ Jobs : contains
     Jobs ||--o{ Proposals : has
     Jobs ||--o{ JobSkills : requires
+    Jobs ||--o{ JobAttachments : has
     Jobs ||--o{ Chats : linked_to
     Skills ||--o{ JobSkills : included_in
     Skills ||--o{ ProposalSkills : specified_in
@@ -20,49 +25,98 @@ erDiagram
         string Name
         string Role
         string AvatarUrl
+        string CoverUrl
         string Bio
+        string Location
+        int YearsOfExperience
+        decimal HourlyRate
+        string PortfolioUrl
+        string PortfolioFileUrl
+        bool IsVerified
         decimal Rating
+        int ReviewsCount
+        int CompletedJobs
+        datetime CreatedAt
+    }
+    Categories {
+        guid Id PK
+        string Name
+        string Slug UK
+        string Icon
+        string Description
+        string ImageUrl
+        string Color
     }
     Jobs {
         guid Id PK
         string Title
         string Description
         guid CategoryId FK
-        guid ClientId FK
         decimal BudgetMin
         decimal BudgetMax
+        string BudgetType
+        datetime Deadline
+        bool IsUrgent
         string Status
+        guid ClientId FK
+        datetime CreatedAt
+    }
+    Skills {
+        string Name PK
+    }
+    JobSkills {
+        guid JobId FK
+        string SkillName FK
+    }
+    JobAttachments {
+        guid Id PK
+        guid JobId FK
+        string FileName
+        string FileUrl
     }
     Proposals {
         guid Id PK
         guid JobId FK
         guid UserId FK
         decimal Price
+        int DeadlineDays
         string CoverLetter
         string Status
+        datetime CreatedAt
     }
-    Categories {
-        guid Id PK
-        string Name
-        string Slug UK
+    ProposalSkills {
+        guid ProposalId FK
+        string SkillName FK
     }
     Chats {
         guid Id PK
         guid UserId FK
         guid ParticipantId FK
+        guid JobId FK
         string LastMessage
+        datetime LastMessageAt
+        int UnreadCount
+        bool IsLeftByUser
+        bool IsLeftByParticipant
+        datetime LeftAtByUser
+        datetime LeftAtByParticipant
+        datetime CreatedAt
     }
     Messages {
         guid Id PK
         guid ChatId FK
         guid SenderId FK
         string Text
+        datetime CreatedAt
     }
     Posts {
         guid Id PK
         guid UserId FK
         string Title
         string Content
+        int LikesCount
+        int CommentsCount
+        datetime CreatedAt
     }
     Reviews {
         guid Id PK
@@ -70,4 +124,22 @@ erDiagram
         guid AuthorId FK
         int Rating
         string Text
+        guid JobId FK
+        datetime CreatedAt
+    }
+    RefreshTokens {
+        guid Id PK
+        guid UserId FK
+        string Token UK
+        datetime ExpiresAt
+        bool IsRevoked
+        datetime CreatedAt
+    }
+    EmailVerificationTokens {
+        guid Id PK
+        guid UserId FK
+        string Token UK
+        datetime ExpiresAt
+        bool IsUsed
+        datetime CreatedAt
     }

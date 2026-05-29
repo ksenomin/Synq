@@ -8,8 +8,10 @@ public class ProposalDto
     public Guid UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string? UserAvatar { get; set; }
+    public Guid ClientId { get; set; }
     public string? ClientName { get; set; }
     public string? ClientAvatar { get; set; }
+    public string? JobStatus { get; set; }
     public decimal Price { get; set; }
     public int DeadlineDays { get; set; }
     public string CoverLetter { get; set; } = string.Empty;

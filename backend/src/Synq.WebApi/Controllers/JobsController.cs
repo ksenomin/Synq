@@ -125,6 +125,32 @@ public class JobsController : BaseController
         var result = await _service.GetMyJobsAsync(GetCurrentUserId(), ct);
         return OkPaginated(result.Items, result.TotalCount, result.Page, result.PageSize);
     }
+
+    /// <summary>
+    /// Closes an in-progress job. Only the job owner can close.
+    /// </summary>
+    [HttpPost("{id:guid}/close")]
+    [Authorize]
+    public async Task<IActionResult> CloseJob(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            var result = await _service.CloseJobAsync(id, GetCurrentUserId(), ct);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
 
 /// <summary>

@@ -23,11 +23,10 @@ import {
 } from 'lucide-react'
 import { Button, Avatar, Badge, Card, Modal, Input } from '../components/common'
 import { PostCard } from '../components/features'
-import { usersApi, postsApi, reviewsApi, chatsApi } from '../api'
+import { usersApi, postsApi, reviewsApi, chatsApi, jobsApi } from '../api'
 import { useAppContext } from '../store'
 import { normalizeUser } from '../utils/normalize'
 import { formatBudget, getRoleName, translateApiError } from '../utils/helpers'
-import { jobs } from '../data/jobs'
 
 const ProfilePage = () => {
   const { id } = useParams()
@@ -38,6 +37,7 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null)
   const [posts, setPosts] = useState([])
   const [reviews, setReviews] = useState([])
+  const [completedJobsCount, setCompletedJobsCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -61,11 +61,6 @@ const ProfilePage = () => {
   const isOwnProfile = user && currentUserId === user.id
   const isClient = user?.role === 'client'
 
-  // Подсчет выполненных заказов для заказчика
-  const completedJobsCount = isClient && user
-    ? jobs.filter(job => job.clientId === user.id && job.status === 'completed').length
-    : 0
-
   const postTypes = [
     { id: 'text', label: 'Текст', icon: FileText },
     { id: 'case', label: 'Кейс', icon: Briefcase },
@@ -74,15 +69,18 @@ const ProfilePage = () => {
 
   useEffect(() => {
     setCoverError(false)
+    setCompletedJobsCount(0)
     usersApi.getBySlug(id).then((userData) => {
       setUser(normalizeUser(userData))
       return Promise.all([
         postsApi.getByUserId(userData.id),
         reviewsApi.getByUserId(userData.id),
+        jobsApi.getAll({ clientId: userData.id, status: 'completed', pageSize: 1 }),
       ])
-    }).then(([postsData, reviewsData]) => {
+    }).then(([postsData, reviewsData, jobsData]) => {
       setPosts(Array.isArray(postsData?.items) ? postsData.items : [])
       setReviews(Array.isArray(reviewsData) ? reviewsData : [])
+      setCompletedJobsCount(jobsData?.totalCount || 0)
     }).catch((err) => console.error('Ошибка загрузки профиля:', err)).finally(() => setLoading(false))
   }, [id])
 

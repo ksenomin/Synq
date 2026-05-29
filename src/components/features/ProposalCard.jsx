@@ -4,19 +4,29 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Card, Avatar, Button, Badge } from '../common'
 import { formatBudget } from '../../utils/helpers'
 import { useAppContext } from '../../store'
-import { chatsApi } from '../../api'
+import { chatsApi, proposalsApi } from '../../api'
 import { useState } from 'react'
 
 /**
  * Карточка отклика на задание
  * @param {Object} proposal - объект отклика
  */
-const ProposalCard = ({ proposal }) => {
+const proposalStatusMap = {
+  pending: { label: 'На рассмотрении', variant: 'warning' },
+  accepted: { label: 'Принят', variant: 'success' },
+  rejected: { label: 'Отклонен', variant: 'error' },
+  withdrawn: { label: 'Отозван', variant: 'gray' },
+}
+
+const ProposalCard = ({ proposal, onAccept }) => {
   const { state } = useAppContext()
   const { currentUser } = state
   const isClient = currentUser?.role === 'client'
   const navigate = useNavigate()
   const [isContacting, setIsContacting] = useState(false)
+  const [isAccepting, setIsAccepting] = useState(false)
+  const statusInfo = proposalStatusMap[proposal.status] || proposalStatusMap.pending
+  const isPending = proposal.status === 'pending'
 
   const handleContact = async () => {
     setIsContacting(true)
@@ -28,6 +38,19 @@ const ProposalCard = ({ proposal }) => {
       alert('Не удалось начать чат: ' + (err.response?.data?.message || 'проверьте подключение и попробуйте снова'))
     } finally {
       setIsContacting(false)
+    }
+  }
+
+  const handleAccept = async () => {
+    setIsAccepting(true)
+    try {
+      await proposalsApi.updateStatus(proposal.id, 'Accepted')
+      onAccept?.(proposal.id)
+    } catch (err) {
+      console.error('Ошибка принятия отклика:', err)
+      alert('Не удалось принять отклик: ' + (err.response?.data?.message || 'проверьте подключение и попробуйте снова'))
+    } finally {
+      setIsAccepting(false)
     }
   }
 
@@ -100,13 +123,24 @@ const ProposalCard = ({ proposal }) => {
           </div>
         </div>
 
-        {/* Кнопки действий — только для заказчиков */}
+        {/* Статус + кнопки действий — только для заказчиков */}
         {isClient && (
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <Button variant="primary" size="sm" className="flex-1 min-w-[120px]">
-              <Check className="w-4 h-4 mr-1 sm:mr-2" />
-              Принять
-            </Button>
+            {!isPending && (
+              <Badge variant={statusInfo.variant} size="md">{statusInfo.label}</Badge>
+            )}
+            {isPending && (
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex-1 min-w-[120px]"
+                onClick={handleAccept}
+                disabled={isAccepting}
+              >
+                <Check className="w-4 h-4 mr-1 sm:mr-2" />
+                {isAccepting ? '...' : 'Принять'}
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="sm"

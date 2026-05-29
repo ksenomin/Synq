@@ -34,4 +34,9 @@ export const jobsApi = {
     const { data } = await api.get('/jobs/my')
     return data
   },
+
+  closeJob: async (id) => {
+    const { data } = await api.post(`/jobs/${id}/close`)
+    return data
+  },
 }

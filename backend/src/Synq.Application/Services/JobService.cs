@@ -25,6 +25,19 @@ public class JobService
             .Include(j => j.Proposals)
             .AsQueryable();
 
+        if (!string.IsNullOrWhiteSpace(filter.Status))
+        {
+            if (Enum.TryParse<Domain.Enums.JobStatus>(filter.Status, true, out var parsedStatus))
+                query = query.Where(j => j.Status == parsedStatus);
+        }
+        else
+        {
+            query = query.Where(j => j.Status == Domain.Enums.JobStatus.Open);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.ClientId) && Guid.TryParse(filter.ClientId, out var clientId))
+            query = query.Where(j => j.ClientId == clientId);
+
         if (!string.IsNullOrWhiteSpace(filter.Search))
             query = query.Where(j => j.Title.Contains(filter.Search) || j.Description.Contains(filter.Search));
 
@@ -194,10 +207,10 @@ public class JobService
     public async Task DeleteAsync(Guid id, Guid clientId, CancellationToken ct = default)
     {
         var job = await _context.Jobs.FindAsync(new object[] { id }, cancellationToken: ct)
-            ?? throw new KeyNotFoundException("Job not found");
+            ?? throw new KeyNotFoundException("Задание не найдено");
 
         if (job.ClientId != clientId)
-            throw new UnauthorizedAccessException("You can only delete your own jobs");
+            throw new UnauthorizedAccessException("Вы можете удалять только свои задания");
 
         _context.Jobs.Remove(job);
         await _context.SaveChangesAsync(ct);
@@ -209,14 +222,56 @@ public class JobService
     public async Task<JobDto> UpdateStatusAsync(Guid id, Guid clientId, string status, CancellationToken ct = default)
     {
         var job = await _context.Jobs.FindAsync(new object[] { id }, cancellationToken: ct)
-            ?? throw new KeyNotFoundException("Job not found");
+            ?? throw new KeyNotFoundException("Задание не найдено");
 
         if (job.ClientId != clientId)
-            throw new UnauthorizedAccessException("You can only change status of your own jobs");
+            throw new UnauthorizedAccessException("Вы можете изменять статус только своих заданий");
 
         job.Status = Enum.Parse<Domain.Enums.JobStatus>(status, true);
         await _context.SaveChangesAsync(ct);
         return (await GetByIdAsync(job.Id, ct))!;
+    }
+
+    /// <summary>
+    /// Closes an in-progress job. Only the job owner can close.
+    /// Returns the closed job and the assigned freelancer (from accepted proposal).
+    /// </summary>
+    public async Task<CloseJobResult> CloseJobAsync(Guid id, Guid clientId, CancellationToken ct = default)
+    {
+        var job = await _context.Jobs
+            .Include(j => j.Proposals)
+            .ThenInclude(p => p.User)
+            .FirstOrDefaultAsync(j => j.Id == id, ct)
+            ?? throw new KeyNotFoundException("Задание не найдено");
+
+        if (job.ClientId != clientId)
+            throw new UnauthorizedAccessException("Вы можете завершать только свои задания");
+
+        if (job.Status != Domain.Enums.JobStatus.InProgress)
+            throw new InvalidOperationException("Завершить можно только задание со статусом «В работе»");
+
+        var acceptedProposal = job.Proposals.FirstOrDefault(p => p.Status == Domain.Enums.ProposalStatus.Accepted);
+
+        if (acceptedProposal != null)
+        {
+            var freelancer = await _context.Users.FindAsync(new object[] { acceptedProposal.UserId }, cancellationToken: ct);
+            if (freelancer != null)
+            {
+                freelancer.CompletedJobs++;
+            }
+        }
+
+        job.Status = Domain.Enums.JobStatus.Completed;
+        await _context.SaveChangesAsync(ct);
+
+        var jobDto = (await GetByIdAsync(job.Id, ct))!;
+
+        return new CloseJobResult
+        {
+            Job = jobDto,
+            FreelancerId = acceptedProposal?.UserId,
+            FreelancerName = acceptedProposal?.User.Name
+        };
     }
 
     /// <summary>

@@ -41,6 +41,30 @@ public class ReviewService
     /// </summary>
     public async Task<ReviewDto> CreateAsync(Guid authorId, CreateReviewRequest request, CancellationToken ct = default)
     {
+        Domain.Entities.Job? reviewJob = null;
+        if (request.JobId.HasValue)
+        {
+            reviewJob = await _context.Jobs
+                .Include(j => j.Proposals)
+                .FirstOrDefaultAsync(j => j.Id == request.JobId.Value, ct)
+                ?? throw new KeyNotFoundException("Задание не найдено");
+
+            var existingReview = await _context.Reviews
+                .FirstOrDefaultAsync(r => r.JobId == request.JobId && r.AuthorId == authorId, ct);
+            if (existingReview != null)
+                throw new InvalidOperationException("Вы уже оставили отзыв по этому заданию");
+
+            if (reviewJob.Status != Domain.Enums.JobStatus.Completed)
+                throw new InvalidOperationException("Отзыв можно оставить только по завершённому заданию");
+
+            var acceptedProposal = reviewJob.Proposals.FirstOrDefault(p => p.Status == Domain.Enums.ProposalStatus.Accepted);
+            var isClient = reviewJob.ClientId == authorId;
+            var isFreelancer = acceptedProposal?.UserId == authorId;
+
+            if (!isClient && !isFreelancer)
+                throw new UnauthorizedAccessException("Только участники задания могут оставлять отзывы по нему");
+        }
+
         var review = new Domain.Entities.Review
         {
             Id = Guid.NewGuid(),
@@ -57,17 +81,21 @@ public class ReviewService
         var user = await _context.Users.FindAsync(new object[] { request.UserId }, cancellationToken: ct);
         if (user != null)
         {
-            user.ReviewsCount++;
-            var avgRating = await _context.Reviews
+            var existingRatings = await _context.Reviews
                 .Where(r => r.UserId == request.UserId)
-                .AverageAsync(r => r.Rating, ct);
-            user.Rating = (decimal)Math.Round(avgRating, 1);
+                .Select(r => (double)r.Rating)
+                .ToListAsync(ct);
+
+            existingRatings.Add(request.Rating);
+
+            user.ReviewsCount = existingRatings.Count;
+            user.Rating = (decimal)Math.Round(existingRatings.Average(), 1);
         }
 
         await _context.SaveChangesAsync(ct);
 
         var author = await _context.Users.FindAsync(new object[] { authorId }, cancellationToken: ct);
-        var job = request.JobId.HasValue ? await _context.Jobs.FindAsync(new object[] { request.JobId.Value }, cancellationToken: ct) : null;
+        var job = reviewJob ?? (request.JobId.HasValue ? await _context.Jobs.FindAsync(new object[] { request.JobId.Value }, cancellationToken: ct) : null);
 
         return new ReviewDto
         {

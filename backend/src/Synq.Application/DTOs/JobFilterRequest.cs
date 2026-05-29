@@ -7,6 +7,8 @@ public class JobFilterRequest
     public decimal? BudgetMin { get; set; }
     public decimal? BudgetMax { get; set; }
     public string? SortBy { get; set; } // "newest", "budget", "deadline"
+    public string? Status { get; set; }
+    public string? ClientId { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
 }

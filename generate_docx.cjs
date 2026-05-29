@@ -130,10 +130,15 @@ const MERMAID_DIAGRAMS = [
     Users ||--o{ Posts : publishes
     Users ||--o{ Reviews : receives
     Users ||--o{ Reviews : writes
+    Users ||--o{ Chats : initiates
     Users ||--o{ Chats : participates
+    Users ||--o{ Messages : sends
+    Users ||--o{ RefreshTokens : owns
+    Users ||--o{ EmailVerificationTokens : owns
     Categories ||--o{ Jobs : contains
     Jobs ||--o{ Proposals : has
     Jobs ||--o{ JobSkills : requires
+    Jobs ||--o{ JobAttachments : has
     Jobs ||--o{ Chats : linked_to
     Skills ||--o{ JobSkills : included_in
     Skills ||--o{ ProposalSkills : specified_in
@@ -146,49 +151,98 @@ const MERMAID_DIAGRAMS = [
         string Name
         string Role
         string AvatarUrl
+        string CoverUrl
         string Bio
+        string Location
+        int YearsOfExperience
+        decimal HourlyRate
+        string PortfolioUrl
+        string PortfolioFileUrl
+        bool IsVerified
         decimal Rating
+        int ReviewsCount
+        int CompletedJobs
+        datetime CreatedAt
+    }
+    Categories {
+        guid Id PK
+        string Name
+        string Slug UK
+        string Icon
+        string Description
+        string ImageUrl
+        string Color
     }
     Jobs {
         guid Id PK
         string Title
         string Description
         guid CategoryId FK
-        guid ClientId FK
         decimal BudgetMin
         decimal BudgetMax
+        string BudgetType
+        datetime Deadline
+        bool IsUrgent
         string Status
+        guid ClientId FK
+        datetime CreatedAt
+    }
+    Skills {
+        string Name PK
+    }
+    JobSkills {
+        guid JobId FK
+        string SkillName FK
+    }
+    JobAttachments {
+        guid Id PK
+        guid JobId FK
+        string FileName
+        string FileUrl
     }
     Proposals {
         guid Id PK
         guid JobId FK
         guid UserId FK
         decimal Price
+        int DeadlineDays
         string CoverLetter
         string Status
+        datetime CreatedAt
     }
-    Categories {
-        guid Id PK
-        string Name
-        string Slug UK
+    ProposalSkills {
+        guid ProposalId FK
+        string SkillName FK
     }
     Chats {
         guid Id PK
         guid UserId FK
         guid ParticipantId FK
+        guid JobId FK
         string LastMessage
+        datetime LastMessageAt
+        int UnreadCount
+        bool IsLeftByUser
+        bool IsLeftByParticipant
+        datetime LeftAtByUser
+        datetime LeftAtByParticipant
+        datetime CreatedAt
     }
     Messages {
         guid Id PK
         guid ChatId FK
         guid SenderId FK
         string Text
+        datetime CreatedAt
     }
     Posts {
         guid Id PK
         guid UserId FK
         string Title
         string Content
+        int LikesCount
+        int CommentsCount
+        datetime CreatedAt
     }
     Reviews {
         guid Id PK
@@ -196,6 +250,24 @@ const MERMAID_DIAGRAMS = [
         guid AuthorId FK
         int Rating
         string Text
+        guid JobId FK
+        datetime CreatedAt
+    }
+    RefreshTokens {
+        guid Id PK
+        guid UserId FK
+        string Token UK
+        datetime ExpiresAt
+        bool IsRevoked
+        datetime CreatedAt
+    }
+    EmailVerificationTokens {
+        guid Id PK
+        guid UserId FK
+        string Token UK
+        datetime ExpiresAt
+        bool IsUsed
+        datetime CreatedAt
     }`
   },
   {
@@ -861,6 +933,7 @@ async function buildDocument(diagramImages) {
             ['YearsOfExperience', 'INTEGER', 'Опыт работы (лет)'],
             ['HourlyRate', 'DECIMAL', 'Почасовая ставка'],
             ['PortfolioUrl', 'TEXT', 'URL портфолио'],
+            ['PortfolioFileUrl', 'TEXT', 'URL файла портфолио'],
             ['IsVerified', 'BOOLEAN', 'Email подтверждён'],
             ['Rating', 'DECIMAL', 'Средний рейтинг'],
             ['ReviewsCount', 'INTEGER', 'Количество отзывов'],
@@ -903,7 +976,7 @@ async function buildDocument(diagramImages) {
           bodyText('Структура таблицы Skills представлена в таблице 2.4.'),
           captionParagraph('Таблица 2.4 — Структура таблицы Skills', true),
           makeDbTable([
-            ['Name', 'VARCHAR(128)', 'Название навыка (первичный ключ)'],
+            ['Name', 'VARCHAR(64)', 'Название навыка (первичный ключ)'],
           ]),
           emptyParagraph(),
 
@@ -911,12 +984,22 @@ async function buildDocument(diagramImages) {
           captionParagraph('Таблица 2.5 — Структура таблицы JobSkills', true),
           makeDbTable([
             ['JobId', 'GUID', 'Внешний ключ на Jobs (составной PK)'],
-            ['SkillName', 'VARCHAR(128)', 'Внешний ключ на Skills (составной PK)'],
+            ['SkillName', 'VARCHAR(64)', 'Внешний ключ на Skills (составной PK)'],
           ]),
           emptyParagraph(),
 
-          bodyText('Структура таблицы Proposals представлена в таблице 2.6.'),
-          captionParagraph('Таблица 2.6 — Структура таблицы Proposals', true),
+          bodyText('Структура таблицы JobAttachments представлена в таблице 2.6.'),
+          captionParagraph('Таблица 2.6 — Структура таблицы JobAttachments', true),
+          makeDbTable([
+            ['Id', 'GUID', 'Первичный ключ'],
+            ['JobId', 'GUID', 'Внешний ключ на Jobs'],
+            ['FileName', 'VARCHAR(256)', 'Имя файла'],
+            ['FileUrl', 'VARCHAR(1024)', 'URL файла'],
+          ]),
+          emptyParagraph(),
+
+          bodyText('Структура таблицы Proposals представлена в таблице 2.7.'),
+          captionParagraph('Таблица 2.7 — Структура таблицы Proposals', true),
           makeDbTable([
             ['Id', 'GUID', 'Первичный ключ'],
             ['JobId', 'GUID', 'Внешний ключ на Jobs'],
@@ -929,8 +1012,16 @@ async function buildDocument(diagramImages) {
           ]),
           emptyParagraph(),
 
-          bodyText('Структура таблицы Chats представлена в таблице 2.7.'),
-          captionParagraph('Таблица 2.7 — Структура таблицы Chats', true),
+          bodyText('Структура таблицы ProposalSkills представлена в таблице 2.8.'),
+          captionParagraph('Таблица 2.8 — Структура таблицы ProposalSkills', true),
+          makeDbTable([
+            ['ProposalId', 'GUID', 'Внешний ключ на Proposals (составной PK)'],
+            ['SkillName', 'VARCHAR(64)', 'Внешний ключ на Skills (составной PK)'],
+          ]),
+          emptyParagraph(),
+
+          bodyText('Структура таблицы Chats представлена в таблице 2.9.'),
+          captionParagraph('Таблица 2.9 — Структура таблицы Chats', true),
           makeDbTable([
             ['Id', 'GUID', 'Первичный ключ'],
             ['UserId', 'GUID', 'Внешний ключ на Users (инициатор)'],
@@ -941,12 +1032,14 @@ async function buildDocument(diagramImages) {
             ['UnreadCount', 'INTEGER', 'Количество непрочитанных'],
             ['IsLeftByUser', 'BOOLEAN', 'Покинут инициатором'],
             ['IsLeftByParticipant', 'BOOLEAN', 'Покинут участником'],
+            ['LeftAtByUser', 'TIMESTAMP', 'Время выхода инициатора'],
+            ['LeftAtByParticipant', 'TIMESTAMP', 'Время выхода участника'],
             ['CreatedAt', 'TIMESTAMP', 'Дата создания'],
           ]),
           emptyParagraph(),
 
-          bodyText('Структура таблицы Messages представлена в таблице 2.8.'),
-          captionParagraph('Таблица 2.8 — Структура таблицы Messages', true),
+          bodyText('Структура таблицы Messages представлена в таблице 2.10.'),
+          captionParagraph('Таблица 2.10 — Структура таблицы Messages', true),
           makeDbTable([
             ['Id', 'GUID', 'Первичный ключ'],
             ['ChatId', 'GUID', 'Внешний ключ на Chats'],
@@ -956,8 +1049,8 @@ async function buildDocument(diagramImages) {
           ]),
           emptyParagraph(),
 
-          bodyText('Структура таблицы Posts представлена в таблице 2.9.'),
-          captionParagraph('Таблица 2.9 — Структура таблицы Posts', true),
+          bodyText('Структура таблицы Posts представлена в таблице 2.11.'),
+          captionParagraph('Таблица 2.11 — Структура таблицы Posts', true),
           makeDbTable([
             ['Id', 'GUID', 'Первичный ключ'],
             ['UserId', 'GUID', 'Внешний ключ на Users (автор)'],
@@ -969,8 +1062,8 @@ async function buildDocument(diagramImages) {
           ]),
           emptyParagraph(),
 
-          bodyText('Структура таблицы Reviews представлена в таблице 2.10.'),
-          captionParagraph('Таблица 2.10 — Структура таблицы Reviews', true),
+          bodyText('Структура таблицы Reviews представлена в таблице 2.12.'),
+          captionParagraph('Таблица 2.12 — Структура таблицы Reviews', true),
           makeDbTable([
             ['Id', 'GUID', 'Первичный ключ'],
             ['UserId', 'GUID', 'Внешний ключ на Users (получатель)'],
@@ -982,21 +1075,53 @@ async function buildDocument(diagramImages) {
           ]),
           emptyParagraph(),
 
+          bodyText('Структура таблицы RefreshTokens представлена в таблице 2.13.'),
+          captionParagraph('Таблица 2.13 — Структура таблицы RefreshTokens', true),
+          makeDbTable([
+            ['Id', 'GUID', 'Первичный ключ'],
+            ['UserId', 'GUID', 'Внешний ключ на Users'],
+            ['Token', 'VARCHAR(512)', 'Токен обновления (уникальный)'],
+            ['ExpiresAt', 'TIMESTAMP', 'Срок действия токена'],
+            ['IsRevoked', 'BOOLEAN', 'Токен отозван'],
+            ['CreatedAt', 'TIMESTAMP', 'Дата создания'],
+          ]),
+          emptyParagraph(),
+
+          bodyText('Структура таблицы EmailVerificationTokens представлена в таблице 2.14.'),
+          captionParagraph('Таблица 2.14 — Структура таблицы EmailVerificationTokens', true),
+          makeDbTable([
+            ['Id', 'GUID', 'Первичный ключ'],
+            ['UserId', 'GUID', 'Внешний ключ на Users'],
+            ['Token', 'VARCHAR(256)', 'Токен верификации (уникальный)'],
+            ['ExpiresAt', 'TIMESTAMP', 'Срок действия токена'],
+            ['IsUsed', 'BOOLEAN', 'Токен использован'],
+            ['CreatedAt', 'TIMESTAMP', 'Дата создания'],
+          ]),
+          emptyParagraph(),
+
           bodyText('Диаграмма базы данных представлена на рисунке 2.5.'),
 
           // Diagram 2.5 - ER
-          ...(diagramImages.er ? imageParagraph(diagramImages.er, 380, 304, 'Рисунок 2.5 — Диаграмма базы данных') : [bodyText('[Диаграмма: Диаграмма базы данных]')]),
+          ...(diagramImages.er ? imageParagraph(diagramImages.er, 380, 400, 'Рисунок 2.5 — Диаграмма базы данных') : [bodyText('[Диаграмма: Диаграмма базы данных]')]),
 
           bodyText('Связи между таблицами:'),
           listItem('User (1) → (N) Job — один заказчик может иметь несколько заказов;'),
           listItem('User (1) → (N) Proposal — один исполнитель может подать несколько предложений;'),
+          listItem('User (1) → (N) Post — исполнитель может иметь несколько публикаций;'),
+          listItem('User (1) → (N) Review — пользователь может получить и написать несколько отзывов;'),
+          listItem('User (1) → (N) Chat — пользователь может участвовать в нескольких чатах (как инициатор и как участник);'),
+          listItem('User (1) → (N) Message — пользователь может отправить несколько сообщений;'),
+          listItem('User (1) → (N) RefreshToken — пользователь может иметь несколько токенов обновления;'),
+          listItem('User (1) → (N) EmailVerificationToken — пользователь может иметь несколько токенов верификации;'),
           listItem('Category (1) → (N) Job — одна категория содержит несколько заказов;'),
           listItem('Job (1) → (N) Proposal — на один заказ может быть подано несколько предложений;'),
           listItem('Job (1) → (N) JobSkill — заказ может требовать несколько навыков;'),
-          listItem('User (1) → (N) Chat — пользователь может участвовать в нескольких чатах;'),
-          listItem('Chat (1) → (N) Message — чат содержит несколько сообщений;'),
-          listItem('User (1) → (N) Review — пользователь может получить несколько отзывов;'),
-          lastListItem('User (1) → (N) Post — исполнитель может иметь несколько публикаций.'),
+          listItem('Job (1) → (N) JobAttachment — заказ может иметь несколько вложений;'),
+          listItem('Job (1) → (N) Chat — заказ может быть связан с несколькими чатами;'),
+          listItem('Skill (1) → (N) JobSkill — навык может входить в несколько заказов;'),
+          listItem('Skill (1) → (N) ProposalSkill — навык может быть указан в нескольких предложениях;'),
+          listItem('Proposal (1) → (N) ProposalSkill — предложение может требовать несколько навыков;'),
+          lastListItem('Chat (1) → (N) Message — чат содержит несколько сообщений.'),
 
           subHeader('2.3 Проектирование интерфейсов'),
           bodyText('Проектирование интерфейсов основано на принципах минимализма, адаптивности и удобства использования. Выбрана стилистика glassmorphism — современный дизайн-подход с полупрозрачными элементами и размытием фона, создающий визуальную глубину и лёгкость интерфейса.'),
@@ -1440,7 +1565,7 @@ async function buildDocument(diagramImages) {
           listItem('проведён анализ предметной области и существующих аналогов (Kwork, FL.ru, Хабр Фриланс), выявлены их ограничения и определены направления улучшений;'),
           listItem('сформулированы функциональные и нефункциональные требования к системе;'),
           listItem('спроектирована архитектура приложения на основе Clean Architecture с разделением на слои Domain, Application, Infrastructure и WebApi;'),
-          listItem('разработана модель базы данных PostgreSQL, включающая 10 основных таблиц с реляционными связями;'),
+          listItem('разработана модель базы данных PostgreSQL, включающая 14 основных таблиц с реляционными связями;'),
           listItem('реализована клиентская часть на React 18 с адаптивным интерфейсом в стиле glassmorphism;'),
           listItem('реализована серверная часть на ASP.NET Core 8 с REST API и SignalR для real-time коммуникации;'),
           listItem('реализована система обмена сообщениями в реальном времени на основе SignalR с автоматическим переподключением и доставкой уведлений о прочтении;'),

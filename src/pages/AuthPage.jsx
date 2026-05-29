@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, User, Briefcase, ArrowRight } from 'lucide-react'
 import { Button, Input, Card } from '../components/common'
@@ -19,6 +19,7 @@ const AuthPage = () => {
     password: '',
     confirmPassword: '',
     role: 'Client',
+    agreeToPrivacy: false,
   })
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
@@ -60,6 +61,8 @@ const AuthPage = () => {
     if (registerForm.password.length < 6) newErrors.password = 'Минимум 6 символов'
     if (registerForm.password !== registerForm.confirmPassword)
       newErrors.confirmPassword = 'Пароли не совпадают'
+    if (!registerForm.agreeToPrivacy)
+      newErrors.agreeToPrivacy = 'Необходимо согласие с политикой конфиденциальности'
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -190,14 +193,7 @@ const AuthPage = () => {
                   error={errors.password}
                 />
 
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm text-gray-600">Запомнить меня</span>
-                  </label>
+                <div className="flex justify-end">
                   <button type="button" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                     Забыли пароль?
                   </button>
@@ -324,6 +320,35 @@ const AuthPage = () => {
                       </div>
                     </button>
                   </div>
+                </div>
+
+                <div>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={registerForm.agreeToPrivacy}
+                      onChange={(e) => {
+                        setRegisterForm({ ...registerForm, agreeToPrivacy: e.target.checked })
+                        if (errors.agreeToPrivacy) setErrors(prev => ({ ...prev, agreeToPrivacy: '' }))
+                      }}
+                      className="w-4 h-4 mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-600">
+                      Я согласен с{' '}
+                      <Link
+                        to="/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-primary-600 hover:text-primary-700 font-medium underline"
+                      >
+                        политикой конфиденциальности
+                      </Link>
+                    </span>
+                  </label>
+                  {errors.agreeToPrivacy && (
+                    <p className="mt-1 text-sm text-error">{errors.agreeToPrivacy}</p>
+                  )}
                 </div>
 
                 <Button type="submit" fullWidth size="lg" className="mt-2" disabled={loading}>

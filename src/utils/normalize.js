@@ -63,6 +63,8 @@ export const normalizeProposal = (apiProposal) => {
   return {
     id: apiProposal.id,
     jobId: apiProposal.jobId,
+    jobTitle: apiProposal.jobTitle || '',
+    jobStatus: apiProposal.jobStatus?.toLowerCase() || '',
     userId: apiProposal.userId,
     userSlug: userName ? slugify(userName) : '',
     userName,
@@ -78,6 +80,9 @@ export const normalizeProposal = (apiProposal) => {
     coverLetter: apiProposal.coverLetter || '',
     portfolioItems: apiProposal.portfolioItems ?? 0,
     status: apiProposal.status?.toLowerCase() || 'pending',
+    clientId: apiProposal.clientId,
+    clientName: apiProposal.clientName || '',
+    clientAvatar: apiProposal.clientAvatar || '',
     createdAt: apiProposal.createdAt,
   }
 }

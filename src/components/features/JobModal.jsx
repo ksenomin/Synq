@@ -21,7 +21,7 @@ import { normalizeProposal } from '../../utils/normalize'
 
 const JobModal = () => {
   const { state, closeJobModal } = useAppContext()
-  const { selectedJob, isJobModalOpen, currentUser } = state
+  const { selectedJob, isJobModalOpen, currentUser, isAuthenticated } = state
   const isClient = currentUser?.role === 'client'
   const navigate = useNavigate()
 
@@ -35,6 +35,11 @@ const JobModal = () => {
   const [isContacting, setIsContacting] = useState(false)
 
   const handleContact = async () => {
+    if (!isAuthenticated) {
+      navigate('/auth')
+      closeJobModal()
+      return
+    }
     if (!selectedJob?.clientId) return
     setIsContacting(true)
     try {
@@ -78,6 +83,11 @@ const JobModal = () => {
   }, [isJobModalOpen, selectedJob?.id])
 
   const handleSubmitProposal = async () => {
+    if (!isAuthenticated) {
+      navigate('/auth')
+      closeJobModal()
+      return
+    }
     if (!proposalPrice || !proposalDays) return
     
     setIsSubmitting(true)

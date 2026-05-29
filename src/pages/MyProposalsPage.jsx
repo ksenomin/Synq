@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Briefcase, Clock, DollarSign, FileText, Eye, XCircle, CheckCircle } from 'lucide-react'
+import { Briefcase, Clock, DollarSign, FileText, Eye, XCircle, CheckCircle, Star } from 'lucide-react'
 import { Card, Badge, Button } from '../components/common'
+import { ReviewModal } from '../components/features'
 import { proposalsApi, jobsApi } from '../api'
 import { useAppContext } from '../store'
 import { formatBudget, formatRelativeDate } from '../utils/helpers'
@@ -15,6 +16,7 @@ const MyProposalsPage = () => {
   const [loading, setLoading] = useState(true)
   const [withdrawingId, setWithdrawingId] = useState(null)
   const [notification, setNotification] = useState(null)
+  const [selectedProposalForReview, setSelectedProposalForReview] = useState(null)
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type })
@@ -158,6 +160,17 @@ const MyProposalsPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      {proposal.status?.toLowerCase() === 'accepted' && proposal.jobStatus?.toLowerCase() === 'completed' && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setSelectedProposalForReview(proposal)}
+                        >
+                          <Star className="w-4 h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Оставить отзыв</span>
+                          <span className="sm:hidden">Отзыв</span>
+                        </Button>
+                      )}
                       {proposal.status?.toLowerCase() === 'pending' && (
                         <Button
                           variant="ghost"
@@ -251,6 +264,17 @@ const MyProposalsPage = () => {
             ))}
           </div>
         )}
+
+        <ReviewModal
+          isOpen={!!selectedProposalForReview}
+          onClose={() => setSelectedProposalForReview(null)}
+          title="Оставить отзыв заказчику"
+          targetName={selectedProposalForReview?.clientName}
+          jobTitle={selectedProposalForReview?.jobTitle}
+          userId={selectedProposalForReview?.clientId}
+          jobId={selectedProposalForReview?.jobId}
+          onSuccess={loadProposals}
+        />
       </div>
     </div>
   )

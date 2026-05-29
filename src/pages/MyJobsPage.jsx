@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Briefcase, Plus, Users, Clock, Eye, Edit3, Trash2 } from 'lucide-react'
+import { Briefcase, Plus, Users, Clock, Eye, Edit3, Trash2, CheckCircle } from 'lucide-react'
 import { Card, Badge, Button } from '../components/common'
+import { CloseJobReviewModal } from '../components/features'
 import { jobsApi } from '../api'
 import { useAppContext } from '../store'
 import { formatBudget, formatRelativeDate } from '../utils/helpers'
@@ -13,8 +14,9 @@ const MyJobsPage = () => {
   const { state, openJobModal } = useAppContext()
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedJobForClose, setSelectedJobForClose] = useState(null)
 
-  useEffect(() => {
+  const fetchJobs = () => {
     setLoading(true)
     jobsApi.getMyJobs()
       .then((data) => {
@@ -24,6 +26,10 @@ const MyJobsPage = () => {
         console.error('Ошибка получения моих заданий:', err)
       })
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchJobs()
   }, [])
 
   const getStatusBadge = (status) => {
@@ -47,6 +53,10 @@ const MyJobsPage = () => {
         alert('Ошибка при удалении задания')
       }
     }
+  }
+
+  const handleCloseSuccess = () => {
+    fetchJobs()
   }
 
   if (loading) {
@@ -116,6 +126,16 @@ const MyJobsPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                      {job.status?.toLowerCase() === 'inprogress' && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => setSelectedJobForClose(job)}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Завершить</span>
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -203,6 +223,13 @@ const MyJobsPage = () => {
             ))}
           </div>
         )}
+
+        <CloseJobReviewModal
+          isOpen={!!selectedJobForClose}
+          onClose={() => setSelectedJobForClose(null)}
+          job={selectedJobForClose}
+          onSuccess={handleCloseSuccess}
+        />
       </div>
     </div>
   )

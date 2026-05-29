@@ -28,12 +28,17 @@ const ChatPage = () => {
   const [chatSearch, setChatSearch] = useState('')
   const [project, setProject] = useState(null)
   const [showChat, setShowChat] = useState(false)
-  const messagesEndRef = useRef(null)
+  const messagesContainerRef = useRef(null)
 
   const activeChat = chats.find((c) => c.id === activeChatId)
 
   const scrollToBottom = useCallback(() => {
-    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    setTimeout(() => {
+      const el = messagesContainerRef.current
+      if (el) {
+        el.scrollTop = el.scrollHeight
+      }
+    }, 50)
   }, [])
 
   const loadChats = useCallback(async (selectChatId) => {
@@ -101,10 +106,19 @@ const ChatPage = () => {
         if (!msg) return
         setMessages((prev) => {
           if (prev.some((m) => m.id === msg.id)) return prev
-          const updated = [...prev, msg].sort(
+          const filtered = prev.filter(
+            (m) =>
+              !(
+                typeof m.id === 'string' &&
+                m.id.startsWith('temp-') &&
+                m.chatId === msg.chatId &&
+                m.senderId === msg.senderId &&
+                m.text === msg.text
+              )
+          )
+          return [...filtered, msg].sort(
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           )
-          return updated
         })
         loadChats()
       },
@@ -156,7 +170,16 @@ const ChatPage = () => {
     }
 
     fetchMessages()
-    signalRService.markAsRead(activeChatId).catch(() => {})
+    if (signalRService.isConnected()) {
+      signalRService.markAsRead(activeChatId).catch(() => {})
+    } else {
+      chatsApi.markAsRead(activeChatId).catch(() => {})
+    }
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === activeChatId ? { ...c, unreadCount: 0 } : c
+      )
+    )
   }, [activeChatId])
 
   // Загрузка информации о проекте
@@ -192,20 +215,47 @@ const ChatPage = () => {
     const text = messageText.trim()
     setMessageText('')
 
-    try {
-      await signalRService.sendMessage(activeChatId, text)
+    const optimisticMsg = {
+      id: `temp-${Date.now()}`,
+      chatId: activeChatId,
+      senderId: currentUserId,
+      senderName: state.currentUser?.name || 'Вы',
+      senderAvatar: state.currentUser?.avatarUrl || '',
+      text,
+      isRead: false,
+      attachments: [],
+      createdAt: new Date().toISOString(),
+    }
 
-      setChats((prev) =>
-        prev.map((c) =>
-          c.id === activeChatId
-            ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString() }
-            : c
-        )
+    setMessages((prev) => [...prev, optimisticMsg])
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === activeChatId
+          ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString() }
+          : c
       )
+    )
+    scrollToBottom()
+
+    try {
+      if (signalRService.isConnected()) {
+        await signalRService.sendMessage(activeChatId, text)
+      } else {
+        const msg = await chatsApi.sendMessage(activeChatId, text)
+        setMessages((prev) => {
+          const without = prev.filter((m) => m.id !== optimisticMsg.id)
+          if (without.some((m) => m.id === msg.id)) return without
+          return [...without, msg].sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          )
+        })
+        loadChats()
+      }
     } catch (err) {
       console.error('Ошибка отправки сообщения:', err)
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id))
     }
-  }, [messageText, activeChatId])
+  }, [messageText, activeChatId, currentUserId, state.currentUser, scrollToBottom])
 
   const filteredChats = chats.filter((c) =>
     c.participantName?.toLowerCase().includes(chatSearch.toLowerCase())
@@ -328,7 +378,7 @@ const ChatPage = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-gray-400">
                   <p>Нет сообщений. Напишите первым!</p>
@@ -352,7 +402,6 @@ const ChatPage = () => {
                   />
                 ))
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             <div className="p-4 bg-white border-t border-gray-100">

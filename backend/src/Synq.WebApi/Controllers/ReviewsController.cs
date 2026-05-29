@@ -31,7 +31,22 @@ public class ReviewsController : BaseController
     [Authorize]
     public async Task<IActionResult> Create([FromBody] CreateReviewRequest request, CancellationToken ct)
     {
-        var review = await _service.CreateAsync(GetCurrentUserId(), request, ct);
-        return Ok(review);
+        try
+        {
+            var review = await _service.CreateAsync(GetCurrentUserId(), request, ct);
+            return Ok(review);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

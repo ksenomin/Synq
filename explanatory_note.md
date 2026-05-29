@@ -293,6 +293,7 @@ flowchart TD
 | YearsOfExperience | INTEGER | Опыт работы (лет) |
 | HourlyRate | DECIMAL | Почасовая ставка |
 | PortfolioUrl | TEXT | URL портфолио |
+| PortfolioFileUrl | TEXT | URL файла портфолио |
 | IsVerified | BOOLEAN | Email подтверждён |
 | Rating | DECIMAL | Средний рейтинг |
 | ReviewsCount | INTEGER | Количество отзывов |
@@ -332,16 +333,25 @@ flowchart TD
 
 | Поле | Тип данных | Описание |
 |---|---|---|
-| Name | VARCHAR(128) | Название навыка (первичный ключ) |
+| Name | VARCHAR(64) | Название навыка (первичный ключ) |
 
 Таблица 2.5 — Структура таблицы JobSkills
 
 | Поле | Тип данных | Описание |
 |---|---|---|
 | JobId | GUID | Внешний ключ на Jobs (составной PK) |
-| SkillName | VARCHAR(128) | Внешний ключ на Skills (составной PK) |
+| SkillName | VARCHAR(64) | Внешний ключ на Skills (составной PK) |
 
-Таблица 2.6 — Структура таблицы Proposals
+Таблица 2.6 — Структура таблицы JobAttachments
+
+| Поле | Тип данных | Описание |
+|---|---|---|
+| Id | GUID | Первичный ключ |
+| JobId | GUID | Внешний ключ на Jobs |
+| FileName | VARCHAR(256) | Имя файла |
+| FileUrl | VARCHAR(1024) | URL файла |
+
+Таблица 2.7 — Структура таблицы Proposals
 
 | Поле | Тип данных | Описание |
 |---|---|---|
@@ -354,7 +364,14 @@ flowchart TD
 | Status | VARCHAR(32) | Статус (Pending/Accepted/Rejected/Withdrawn) |
 | CreatedAt | TIMESTAMP | Дата создания |
 
-Таблица 2.7 — Структура таблицы Chats
+Таблица 2.8 — Структура таблицы ProposalSkills
+
+| Поле | Тип данных | Описание |
+|---|---|---|
+| ProposalId | GUID | Внешний ключ на Proposals (составной PK) |
+| SkillName | VARCHAR(64) | Внешний ключ на Skills (составной PK) |
+
+Таблица 2.9 — Структура таблицы Chats
 
 | Поле | Тип данных | Описание |
 |---|---|---|
@@ -367,9 +384,11 @@ flowchart TD
 | UnreadCount | INTEGER | Количество непрочитанных |
 | IsLeftByUser | BOOLEAN | Покинут инициатором |
 | IsLeftByParticipant | BOOLEAN | Покинут участником |
+| LeftAtByUser | TIMESTAMP | Время выхода инициатора |
+| LeftAtByParticipant | TIMESTAMP | Время выхода участника |
 | CreatedAt | TIMESTAMP | Дата создания |
 
-Таблица 2.8 — Структура таблицы Messages
+Таблица 2.10 — Структура таблицы Messages
 
 | Поле | Тип данных | Описание |
 |---|---|---|
@@ -379,7 +398,7 @@ flowchart TD
 | Text | TEXT | Текст сообщения |
 | CreatedAt | TIMESTAMP | Дата отправки |
 
-Таблица 2.9 — Структура таблицы Posts
+Таблица 2.11 — Структура таблицы Posts
 
 | Поле | Тип данных | Описание |
 |---|---|---|
@@ -391,7 +410,7 @@ flowchart TD
 | CommentsCount | INTEGER | Количество комментариев |
 | CreatedAt | TIMESTAMP | Дата создания |
 
-Таблица 2.10 — Структура таблицы Reviews
+Таблица 2.12 — Структура таблицы Reviews
 
 | Поле | Тип данных | Описание |
 |---|---|---|
@@ -403,23 +422,49 @@ flowchart TD
 | JobId | GUID | Внешний ключ на Jobs (nullable) |
 | CreatedAt | TIMESTAMP | Дата создания |
 
+Таблица 2.13 — Структура таблицы RefreshTokens
+
+| Поле | Тип данных | Описание |
+|---|---|---|
+| Id | GUID | Первичный ключ |
+| UserId | GUID | Внешний ключ на Users |
+| Token | VARCHAR(512) | Токен обновления (уникальный) |
+| ExpiresAt | TIMESTAMP | Срок действия токена |
+| IsRevoked | BOOLEAN | Токен отозван |
+| CreatedAt | TIMESTAMP | Дата создания |
+
+Таблица 2.14 — Структура таблицы EmailVerificationTokens
+
+| Поле | Тип данных | Описание |
+|---|---|---|
+| Id | GUID | Первичный ключ |
+| UserId | GUID | Внешний ключ на Users |
+| Token | VARCHAR(256) | Токен верификации (уникальный) |
+| ExpiresAt | TIMESTAMP | Срок действия токена |
+| IsUsed | BOOLEAN | Токен использован |
+| CreatedAt | TIMESTAMP | Дата создания |
+
 ```mermaid
 erDiagram
-    Users ||--o{ Jobs : "создаёт"
-    Users ||--o{ Proposals : "подносит"
-    Users ||--o{ Posts : "публикует"
-    Users ||--o{ Reviews : "получает"
-    Users ||--o{ Reviews : "написано"
-    Categories ||--o{ Jobs : "содержит"
-    Jobs ||--o{ Proposals : "имеет"
-    Jobs ||--o{ JobSkills : "требует"
-    Jobs ||--o{ JobAttachments : "имеет"
-    Jobs ||--o{ Chats : "связан"
-    Skills ||--o{ JobSkills : "входит в"
-    Skills ||--o{ ProposalSkills : "указан в"
-    Proposals ||--o{ ProposalSkills : "требует"
-    Chats ||--o{ Messages : "содержит"
-    Users ||--o{ Chats : "участвует"
+    Users ||--o{ Jobs : creates
+    Users ||--o{ Proposals : submits
+    Users ||--o{ Posts : publishes
+    Users ||--o{ Reviews : receives
+    Users ||--o{ Reviews : writes
+    Users ||--o{ Chats : initiates
+    Users ||--o{ Chats : participates
+    Users ||--o{ Messages : sends
+    Users ||--o{ RefreshTokens : owns
+    Users ||--o{ EmailVerificationTokens : owns
+    Categories ||--o{ Jobs : contains
+    Jobs ||--o{ Proposals : has
+    Jobs ||--o{ JobSkills : requires
+    Jobs ||--o{ JobAttachments : has
+    Jobs ||--o{ Chats : linked_to
+    Skills ||--o{ JobSkills : included_in
+    Skills ||--o{ ProposalSkills : specified_in
+    Proposals ||--o{ ProposalSkills : requires
+    Chats ||--o{ Messages : contains
 
     Users {
         guid Id PK
@@ -428,9 +473,28 @@ erDiagram
         string Name
         string Role
         string AvatarUrl
+        string CoverUrl
         string Bio
+        string Location
+        int YearsOfExperience
+        decimal HourlyRate
+        string PortfolioUrl
+        string PortfolioFileUrl
+        bool IsVerified
         decimal Rating
         int ReviewsCount
+        int CompletedJobs
+        datetime CreatedAt
+    }
+
+    Categories {
+        guid Id PK
+        string Name
+        string Slug UK
+        string Icon
+        string Description
+        string ImageUrl
+        string Color
     }
 
     Jobs {
@@ -438,12 +502,30 @@ erDiagram
         string Title
         string Description
         guid CategoryId FK
-        guid ClientId FK
         decimal BudgetMin
         decimal BudgetMax
         string BudgetType
-        string Status
         datetime Deadline
+        bool IsUrgent
+        string Status
+        guid ClientId FK
+        datetime CreatedAt
+    }
+
+    Skills {
+        string Name PK
+    }
+
+    JobSkills {
+        guid JobId FK
+        string SkillName FK
+    }
+
+    JobAttachments {
+        guid Id PK
+        guid JobId FK
+        string FileName
+        string FileUrl
     }
 
     Proposals {
@@ -454,13 +536,12 @@ erDiagram
         int DeadlineDays
         string CoverLetter
         string Status
+        datetime CreatedAt
     }
 
-    Categories {
-        guid Id PK
-        string Name
-        string Slug UK
-        string Description
+    ProposalSkills {
+        guid ProposalId FK
+        string SkillName FK
     }
 
     Chats {
@@ -469,6 +550,13 @@ erDiagram
         guid ParticipantId FK
         guid JobId FK
         string LastMessage
+        datetime LastMessageAt
+        int UnreadCount
+        bool IsLeftByUser
+        bool IsLeftByParticipant
+        datetime LeftAtByUser
+        datetime LeftAtByParticipant
+        datetime CreatedAt
     }
 
     Messages {
@@ -476,6 +564,7 @@ erDiagram
         guid ChatId FK
         guid SenderId FK
         string Text
+        datetime CreatedAt
     }
 
     Posts {
@@ -483,6 +572,9 @@ erDiagram
         guid UserId FK
         string Title
         string Content
+        int LikesCount
+        int CommentsCount
+        datetime CreatedAt
     }
 
     Reviews {
@@ -491,6 +583,26 @@ erDiagram
         guid AuthorId FK
         int Rating
         string Text
+        guid JobId FK
+        datetime CreatedAt
+    }
+
+    RefreshTokens {
+        guid Id PK
+        guid UserId FK
+        string Token UK
+        datetime ExpiresAt
+        bool IsRevoked
+        datetime CreatedAt
+    }
+
+    EmailVerificationTokens {
+        guid Id PK
+        guid UserId FK
+        string Token UK
+        datetime ExpiresAt
+        bool IsUsed
+        datetime CreatedAt
     }
 ```
 
@@ -500,13 +612,21 @@ erDiagram
 
 - User (1) → (N) Job — один заказчик может иметь несколько заказов;
 - User (1) → (N) Proposal — один исполнитель может подать несколько предложений;
+- User (1) → (N) Post — исполнитель может иметь несколько публикаций;
+- User (1) → (N) Review — пользователь может получить и написать несколько отзывов;
+- User (1) → (N) Chat — пользователь может участвовать в нескольких чатах (как инициатор и как участник);
+- User (1) → (N) Message — пользователь может отправить несколько сообщений;
+- User (1) → (N) RefreshToken — пользователь может иметь несколько токенов обновления;
+- User (1) → (N) EmailVerificationToken — пользователь может иметь несколько токенов верификации;
 - Category (1) → (N) Job — одна категория содержит несколько заказов;
 - Job (1) → (N) Proposal — на один заказ может быть подано несколько предложений;
 - Job (1) → (N) JobSkill — заказ может требовать несколько навыков;
-- User (1) → (N) Chat — пользователь может участвовать в нескольких чатах;
-- Chat (1) → (N) Message — чат содержит несколько сообщений;
-- User (1) → (N) Review — пользователь может получить несколько отзывов;
-- User (1) → (N) Post — исполнитель может иметь несколько публикаций.
+- Job (1) → (N) JobAttachment — заказ может иметь несколько вложений;
+- Job (1) → (N) Chat — заказ может быть связан с несколькими чатами;
+- Skill (1) → (N) JobSkill — навык может входить в несколько заказов;
+- Skill (1) → (N) ProposalSkill — навык может быть указан в нескольких предложениях;
+- Proposal (1) → (N) ProposalSkill — предложение может требовать несколько навыков;
+- Chat (1) → (N) Message — чат содержит несколько сообщений.
 
 ## 2.3 Проектирование интерфейсов
 
@@ -856,7 +976,7 @@ Cookie-токен `synq_session` создаётся с следующими па
 - проведён анализ предметной области и существующих аналогов (Kwork, FL.ru, Хабр Фриланс), выявлены их ограничения и определены направления улучшений;
 - сформулированы функциональные и нефункциональные требования к системе;
 - спроектирована архитектура приложения на основе Clean Architecture с разделением на слои Domain, Application, Infrastructure и WebApi;
-- разработана модель базы данных PostgreSQL, включающая 10 основных таблиц с реляционными связями;
+- разработана модель базы данных PostgreSQL, включающая 14 основных таблиц с реляционными связями;
 - реализована клиентская часть на React 18 с адаптивным интерфейсом в стиле glassmorphism;
 - реализована серверная часть на ASP.NET Core 8 с REST API и SignalR для real-time коммуникации;
 - реализована система обмена сообщениями в реальном времени на основе SignalR с автоматическим переподключением и доставкой уведлений о прочтении;

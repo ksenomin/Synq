@@ -69,9 +69,9 @@ const Footer = () => {
             © {currentYear} SYNQ. Все права защищены.
           </p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-gray-500 hover:text-white text-sm transition-colors">
+            <Link to="/privacy" className="text-gray-500 hover:text-white text-sm transition-colors">
               Конфиденциальность
-            </a>
+            </Link>
             <a href="#" className="text-gray-500 hover:text-white text-sm transition-colors">
               Условия
             </a>

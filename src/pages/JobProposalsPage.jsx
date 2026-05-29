@@ -61,6 +61,14 @@ const JobProposalsPage = () => {
     return () => clearTimeout(debounceRef.current)
   }, [filterPriceMin, filterPriceMax, filterRating, sortBy])
 
+  const handleAcceptProposal = (proposalId) => {
+    setProposals((prev) =>
+      prev.map((p) =>
+        p.id === proposalId ? { ...p, status: 'accepted' } : p
+      )
+    )
+  }
+
   const handleResetFilters = () => {
     setFilterPriceMin('')
     setFilterPriceMax('')
@@ -231,7 +239,7 @@ const JobProposalsPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <ProposalCard proposal={proposal} />
+                <ProposalCard proposal={proposal} onAccept={handleAcceptProposal} />
               </motion.div>
             ))}
           </div>

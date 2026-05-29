@@ -96,6 +96,12 @@ public class ProposalService
             throw new UnauthorizedAccessException("Only the job owner can accept/reject proposals");
 
         proposal.Status = Enum.Parse<Domain.Enums.ProposalStatus>(status, true);
+
+        if (proposal.Status == Domain.Enums.ProposalStatus.Accepted)
+        {
+            proposal.Job.Status = Domain.Enums.JobStatus.InProgress;
+        }
+
         await _context.SaveChangesAsync(ct);
 
         return new ProposalDto
@@ -141,9 +147,11 @@ public class ProposalService
             Id = proposal.Id,
             JobId = proposal.JobId,
             JobTitle = proposal.Job.Title,
+            JobStatus = proposal.Job.Status.ToString(),
             UserId = proposal.UserId,
             UserName = proposal.User.Name,
             UserAvatar = proposal.User.AvatarUrl,
+            ClientId = proposal.Job.ClientId,
             ClientName = proposal.Job.Client.Name,
             ClientAvatar = proposal.Job.Client.AvatarUrl,
             Price = proposal.Price,
@@ -173,9 +181,11 @@ public class ProposalService
                 Id = p.Id,
                 JobId = p.JobId,
                 JobTitle = p.Job.Title,
+                JobStatus = p.Job.Status.ToString(),
                 UserId = p.UserId,
                 UserName = p.User.Name,
                 UserAvatar = p.User.AvatarUrl,
+                ClientId = p.Job.ClientId,
                 ClientName = p.Job.Client.Name,
                 ClientAvatar = p.Job.Client.AvatarUrl,
                 Price = p.Price,

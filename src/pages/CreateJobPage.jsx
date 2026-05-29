@@ -16,6 +16,14 @@ import { categoriesApi, jobsApi } from '../api'
 import { normalizeCategory } from '../utils/normalize'
 import { translateApiError } from '../utils/helpers'
 
+const getTodayStr = () => {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 const CreateJobPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -95,7 +103,15 @@ const CreateJobPage = () => {
     if (!formData.title.trim()) newErrors.title = 'Введите название'
     if (!formData.categoryId) newErrors.categoryId = 'Выберите категорию'
     if (!formData.budgetMin) newErrors.budgetMin = 'Укажите бюджет'
-    if (!formData.deadline) newErrors.deadline = 'Укажите дедлайн'
+    if (!formData.deadline) {
+      newErrors.deadline = 'Укажите дедлайн'
+    } else {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const deadline = new Date(formData.deadline)
+      deadline.setHours(0, 0, 0, 0)
+      if (deadline < today) newErrors.deadline = 'Дедлайн не может быть в прошлом'
+    }
     if (!formData.description.trim()) newErrors.description = 'Введите описание'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -254,6 +270,7 @@ const CreateJobPage = () => {
               <Input
                 type="date"
                 label="Дедлайн"
+                min={getTodayStr()}
                 value={formData.deadline}
                 onChange={(e) => handleChange('deadline', e.target.value)}
                 error={errors.deadline}
