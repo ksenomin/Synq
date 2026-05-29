@@ -24,6 +24,10 @@ const AuthPage = () => {
   const [errors, setErrors] = useState({})
   const [apiError, setApiError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [needsVerification, setNeedsVerification] = useState(false)
+  const [verificationEmail, setVerificationEmail] = useState('')
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendMessage, setResendMessage] = useState('')
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -38,11 +42,17 @@ const AuthPage = () => {
 
     setLoading(true)
     setApiError('')
+    setNeedsVerification(false)
 
     try {
       const response = await authApi.login(loginForm.email, loginForm.password)
       login(response.user)
-      navigate('/')
+      if (response.needsVerification) {
+        setNeedsVerification(true)
+        setVerificationEmail(loginForm.email)
+      } else {
+        navigate('/')
+      }
     } catch (err) {
       console.error('Ошибка входа — статус:', err.response?.status)
       console.error('Ошибка входа — данные:', err.response?.data)
@@ -71,6 +81,7 @@ const AuthPage = () => {
 
     setLoading(true)
     setApiError('')
+    setNeedsVerification(false)
 
     try {
       const response = await authApi.register(
@@ -80,7 +91,12 @@ const AuthPage = () => {
         registerForm.role
       )
       login(response.user)
-      navigate('/')
+      if (response.needsVerification) {
+        setNeedsVerification(true)
+        setVerificationEmail(registerForm.email)
+      } else {
+        navigate('/')
+      }
     } catch (err) {
       setApiError(translateApiError(err.response?.data?.error) || 'Ошибка регистрации')
     } finally {
@@ -96,6 +112,22 @@ const AuthPage = () => {
   const switchTab = (tab) => {
     setActiveTab(tab)
     clearErrors()
+    setNeedsVerification(false)
+    setResendMessage('')
+  }
+
+  const handleResend = async () => {
+    if (!verificationEmail) return
+    setResendLoading(true)
+    setResendMessage('')
+    try {
+      await authApi.resendVerification(verificationEmail)
+      setResendMessage('Письмо отправлено повторно. Проверьте почту.')
+    } catch (err) {
+      setResendMessage(translateApiError(err.response?.data?.error) || 'Не удалось отправить письмо.')
+    } finally {
+      setResendLoading(false)
+    }
   }
 
   return (
@@ -154,6 +186,30 @@ const AuthPage = () => {
             <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-xl text-sm text-error">
               {apiError}
             </div>
+          )}
+
+          {needsVerification && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800"
+            >
+              <p className="font-semibold mb-1">Подтвердите email</p>
+              <p className="mb-2">
+                На вашу почту отправлено письмо со ссылкой для подтверждения аккаунта.
+                Перейдите по ссылке в письме, чтобы завершить регистрацию.
+              </p>
+              <button
+                onClick={handleResend}
+                disabled={resendLoading}
+                className="text-primary-600 hover:text-primary-700 font-medium underline disabled:opacity-50"
+              >
+                {resendLoading ? 'Отправка…' : 'Выслать письмо повторно'}
+              </button>
+              {resendMessage && (
+                <p className="mt-1 text-xs text-gray-600">{resendMessage}</p>
+              )}
+            </motion.div>
           )}
 
           <AnimatePresence mode="wait">

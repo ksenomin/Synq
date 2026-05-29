@@ -17,6 +17,7 @@ import JobProposalsPage from './pages/JobProposalsPage'
 import MyProposalsPage from './pages/MyProposalsPage'
 import MyJobsPage from './pages/MyJobsPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
 
 import JobModal from './components/features/JobModal'
 
@@ -34,6 +35,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
 
               <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
               <Route path="/jobs" element={<ProtectedRoute><JobsPage /></ProtectedRoute>} />

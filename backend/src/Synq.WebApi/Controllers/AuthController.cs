@@ -32,7 +32,8 @@ public class AuthController : BaseController
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new(ClaimTypes.Email, user.Email),
                 new(ClaimTypes.Name, user.Name),
-                new(ClaimTypes.Role, user.Role)
+                new(ClaimTypes.Role, user.Role),
+                new("IsVerified", user.IsVerified.ToString().ToLowerInvariant())
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -56,14 +57,15 @@ public class AuthController : BaseController
     {
         try
         {
-            var user = await _auth.LoginAsync(request, ct);
+            var (user, needsVerification) = await _auth.LoginAsync(request, ct);
 
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new(ClaimTypes.Email, user.Email),
                 new(ClaimTypes.Name, user.Name),
-                new(ClaimTypes.Role, user.Role)
+                new(ClaimTypes.Role, user.Role),
+                new("IsVerified", user.IsVerified.ToString().ToLowerInvariant())
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -71,7 +73,7 @@ public class AuthController : BaseController
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-            return Ok(new { user });
+            return Ok(new { user, needsVerification });
         }
         catch (InvalidOperationException ex)
         {
@@ -97,7 +99,8 @@ public class AuthController : BaseController
                 new(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new(ClaimTypes.Email, user.Email),
                 new(ClaimTypes.Name, user.Name),
-                new(ClaimTypes.Role, user.Role)
+                new(ClaimTypes.Role, user.Role),
+                new("IsVerified", user.IsVerified.ToString().ToLowerInvariant())
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -153,6 +156,7 @@ public class AuthController : BaseController
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
         var name = User.FindFirst(ClaimTypes.Name)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var isVerified = User.FindFirst("IsVerified")?.Value == "true";
 
         return Ok(new
         {
@@ -162,6 +166,7 @@ public class AuthController : BaseController
                 email,
                 name,
                 role,
+                isVerified,
             }
         });
     }

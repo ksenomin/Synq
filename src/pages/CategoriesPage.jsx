@@ -1,28 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import {
-  Layout,
-  Palette,
-  PenTool,
-  Film,
-  Code,
-  Box,
-  ArrowRight,
-} from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Card, Badge } from '../components/common'
 import { categoriesApi } from '../api'
 import { normalizeCategory } from '../utils/normalize'
-
-const iconMap = {
-  Layout,
-  Palette,
-  PenTool,
-  Image: PenTool,
-  Film,
-  Code,
-  Box,
-}
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([])
@@ -58,9 +40,7 @@ const CategoriesPage = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {categories.map((category, index) => {
-            const Icon = iconMap[category.icon] || Box
-            return (
+          {categories.map((category, index) => (
               <motion.div
                 key={category.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -70,11 +50,14 @@ const CategoriesPage = () => {
               >
                 <Link to={`/jobs?category=${category.slug}`}>
                   <Card hoverable className="overflow-hidden group h-full">
-                    <div
-                      className={`h-40 bg-gradient-to-r ${category.color} relative flex items-center justify-center`}
-                    >
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
-                      <Icon className="w-16 h-16 text-white/80 relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                    <div className="h-40 relative overflow-hidden">
+                      {category.image && (
+                        <img
+                          src={category.image}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      )}
                     </div>
 
                     <div className="p-6">
@@ -100,7 +83,7 @@ const CategoriesPage = () => {
                 </Link>
               </motion.div>
             )
-          })}
+          )}
         </div>
 
         <div className="mt-20 text-center">

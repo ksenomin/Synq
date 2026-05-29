@@ -35,10 +35,25 @@ const Header = () => {
     return location.pathname.startsWith(path)
   }
 
+  const showVerificationBanner = isAuthenticated && currentUser && !currentUser.verified
+
   return (
-    <header className="sticky top-0 z-30 glass border-b border-gray-200/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+    <>
+      {showVerificationBanner && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 px-4 py-2 text-center text-sm">
+          <span className="font-medium">Email не подтвержден.</span>{' '}
+          Подтвердите почту, чтобы получить статус верифицированного пользователя.{' '}
+          <button
+            onClick={() => navigate('/profile/' + currentUser.slug)}
+            className="underline hover:text-amber-900 font-medium"
+          >
+            Перейти в профиль
+          </button>
+        </div>
+      )}
+      <header className="sticky top-0 z-30 glass border-b border-gray-200/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Логотип */}
           <Link to="/" className="flex items-center gap-2">
             <img
@@ -263,6 +278,7 @@ const Header = () => {
         )}
       </div>
     </header>
+    </>
   )
 }
 

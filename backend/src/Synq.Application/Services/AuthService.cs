@@ -79,19 +79,15 @@ public class AuthService
     }
 
     /// <summary>
-    /// Authenticates a user and returns the user DTO.
+    /// Authenticates a user and returns the user DTO together with a verification flag.
     /// </summary>
-    public async Task<UserDto> LoginAsync(LoginRequest request, CancellationToken ct = default)
+    public async Task<(UserDto User, bool NeedsVerification)> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email, ct);
         if (user == null || !PasswordHasher.Verify(request.Password, user.PasswordHash))
             throw new InvalidOperationException("Invalid email or password");
 
-        // Temporarily disabled for testing - email verification check
-        // if (!user.IsVerified)
-        //     throw new InvalidOperationException("Email not verified. Please check your inbox.");
-
-        return MapToUserDto(user);
+        return (MapToUserDto(user), !user.IsVerified);
     }
 
     /// <summary>

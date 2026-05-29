@@ -43,8 +43,17 @@ export const normalizeUser = (apiUser) => ({
   hourlyRate: apiUser.hourlyRate || 0,
   portfolioUrl: apiUser.portfolioUrl || '',
   yearsOfExperience: apiUser.yearsOfExperience || 0,
-  joinDate: apiUser.createdAt,
+  joinDate: apiUser.createdAt || null,
 })
+
+const categoryImageMap = {
+  'web-design': '/categories/web_design.png',
+  'ui-ux': '/categories/UI_UX_design.png',
+  'graphic-design': '/categories/Graphic_design.png',
+  'motion': '/categories/Motion_design.png',
+  'development': '/categories/Programing.png',
+  '3d': '/categories/3D_design.png',
+}
 
 export const normalizeCategory = (apiCategory) => ({
   id: apiCategory.id,
@@ -53,7 +62,7 @@ export const normalizeCategory = (apiCategory) => ({
   icon: apiCategory.icon,
   description: apiCategory.description,
   jobCount: apiCategory.jobCount || 0,
-  image: apiCategory.imageUrl || '',
+  image: apiCategory.imageUrl || categoryImageMap[apiCategory.slug] || '',
   color: apiCategory.color || 'from-gray-500 to-gray-400',
   span: 'col-span-1',
 })

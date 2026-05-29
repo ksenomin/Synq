@@ -8,7 +8,7 @@ const normalizeUser = (apiUser) => ({
   slug: slugify(apiUser.name),
   role: apiUser.role?.toLowerCase() || 'client',
   avatar: apiUser.avatarUrl || apiUser.avatar || '',
-  cover: apiUser.coverUrl || apiUser.cover || '',
+  cover: apiUser.coverUrl || apiUser.cover || null,
   bio: apiUser.bio || '',
   location: apiUser.location || '',
   verified: apiUser.isVerified || false,
@@ -16,6 +16,9 @@ const normalizeUser = (apiUser) => ({
   reviewsCount: apiUser.reviewsCount || 0,
   completedJobs: apiUser.completedJobs || 0,
   hourlyRate: apiUser.hourlyRate || 0,
+  portfolioUrl: apiUser.portfolioUrl || '',
+  yearsOfExperience: apiUser.yearsOfExperience || 0,
+  joinDate: apiUser.createdAt || null,
 })
 
 const loadUserFromStorage = () => {

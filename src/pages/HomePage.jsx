@@ -253,8 +253,14 @@ const HomePage = () => {
               >
                 <Link to="/categories">
                   <Card hoverable className="overflow-hidden group">
-                    <div className={`h-32 bg-gradient-to-r ${category.color} relative`}>
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
+                    <div className="h-32 relative overflow-hidden">
+                      {category.image && (
+                        <img
+                          src={category.image}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      )}
                     </div>
                     <div className="p-6">
                       <h3 className="text-lg font-bold text-gray-900 mb-2">
