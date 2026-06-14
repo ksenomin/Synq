@@ -222,7 +222,7 @@ const ChatPage = () => {
       senderName: state.currentUser?.name || 'Вы',
       senderAvatar: state.currentUser?.avatarUrl || '',
       text,
-      isRead: false,
+      isRead: true,
       attachments: [],
       createdAt: new Date().toISOString(),
     }

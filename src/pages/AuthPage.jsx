@@ -144,7 +144,7 @@ const AuthPage = () => {
       >
         <div className="text-center mb-8">
           <img
-            src="/synq-logo.jpg"
+            src="/logos/logo-black.png"
             alt="SYNQ"
             className="h-14 w-auto rounded-2xl object-contain mx-auto mb-4"
           />

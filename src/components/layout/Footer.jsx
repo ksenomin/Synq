@@ -28,7 +28,7 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <img
-                src="/synq-logo.jpg"
+                src="/logos/logo-white.png"
                 alt="SYNQ"
                 className="h-10 w-auto rounded-xl object-contain"
               />

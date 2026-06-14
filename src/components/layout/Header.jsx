@@ -57,7 +57,7 @@ const Header = () => {
           {/* Логотип */}
           <Link to="/" className="flex items-center gap-2">
             <img
-              src="/synq-logo.jpg"
+              src="/logos/logo-black.png"
               alt="SYNQ"
               className="h-10 w-auto rounded-xl object-contain"
             />

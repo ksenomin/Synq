@@ -112,7 +112,7 @@ const JobProposalsPage = () => {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           Задание не найдено
         </h2>
-        <Link to="/jobs">
+        <Link to="/my-jobs">
           <Button variant="primary">Вернуться к заданиям</Button>
         </Link>
       </div>
@@ -123,7 +123,7 @@ const JobProposalsPage = () => {
     <div className="py-12 lg:py-20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-8">
-          <Link to="/jobs" className="shrink-0">
+          <Link to="/my-jobs" className="shrink-0">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Назад
