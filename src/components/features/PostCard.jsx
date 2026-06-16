@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import {
   Image,
   Video,
@@ -8,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Avatar, Badge } from '../common'
 import { formatRelativeDate } from '../../utils/helpers'
+import { slugify } from '../../utils/slug'
 
 /**
  * Карточка публикации в ленте профиля
@@ -15,6 +17,9 @@ import { formatRelativeDate } from '../../utils/helpers'
  * @param {Object} post - объект публикации
  */
 const PostCard = ({ post }) => {
+  const authorName = post.author?.name || post.authorName || 'Автор'
+  const authorAvatar = post.author?.avatar || post.authorAvatar || ''
+  const authorSlug = post.author?.slug || post.authorSlug || slugify(authorName)
 
   // Иконка типа публикации
   const typeIcons = {
@@ -45,15 +50,20 @@ const PostCard = ({ post }) => {
       <div className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <Avatar
-              src={post.author?.avatar}
-              name={post.author?.name || 'Автор'}
-              size="md"
-            />
+            <Link to={`/profile/${authorSlug}`} className="shrink-0">
+              <Avatar
+                src={authorAvatar}
+                name={authorName}
+                size="md"
+              />
+            </Link>
             <div>
-              <p className="font-semibold text-gray-900">
-                {post.author?.name || 'Автор'}
-              </p>
+              <Link
+                to={`/profile/${authorSlug}`}
+                className="font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+              >
+                {authorName}
+              </Link>
               <p className="text-sm text-gray-500">
                 {formatRelativeDate(post.createdAt)}
               </p>

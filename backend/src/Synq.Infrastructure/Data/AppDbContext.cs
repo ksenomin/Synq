@@ -134,6 +134,8 @@ public class AppDbContext : DbContext
             b.Property(x => x.LastMessage).HasMaxLength(500);
             b.Property(x => x.IsLeftByUser).HasDefaultValue(false);
             b.Property(x => x.IsLeftByParticipant).HasDefaultValue(false);
+            b.Property(x => x.UnreadCountByUser).HasDefaultValue(0);
+            b.Property(x => x.UnreadCountByParticipant).HasDefaultValue(0);
             b.Property(x => x.CreatedAt).HasDefaultValueSql("NOW()");
 
             b.HasOne(x => x.User).WithMany(x => x.ChatsAsUser).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);

@@ -2,6 +2,7 @@ import { slugify } from './slug'
 
 export const normalizeJob = (apiJob) => {
   const description = apiJob.description || ''
+  const clientName = apiJob.clientName || ''
   return {
     id: apiJob.id,
     title: apiJob.title || '',
@@ -19,7 +20,8 @@ export const normalizeJob = (apiJob) => {
     proposalsCount: apiJob.proposalsCount ?? 0,
     status: apiJob.status?.toLowerCase() || 'open',
     clientId: apiJob.clientId,
-    clientName: apiJob.clientName || '',
+    clientName,
+    clientSlug: apiJob.clientSlug || slugify(clientName),
     clientAvatar: apiJob.clientAvatar || '',
     skills: apiJob.skills || [],
     attachments: apiJob.attachments?.map((a) => (typeof a === 'string' ? a : a.fileName)) || [],
@@ -30,7 +32,7 @@ export const normalizeJob = (apiJob) => {
 export const normalizeUser = (apiUser) => ({
   id: apiUser.id,
   name: apiUser.name,
-  slug: slugify(apiUser.name),
+  slug: apiUser.slug || slugify(apiUser.name),
   role: apiUser.role?.toLowerCase() || 'freelancer',
   avatar: apiUser.avatarUrl || apiUser.avatar || '',
   cover: apiUser.coverUrl || apiUser.cover || null,
@@ -69,13 +71,14 @@ export const normalizeCategory = (apiCategory) => ({
 
 export const normalizeProposal = (apiProposal) => {
   const userName = apiProposal.userName || ''
+  const clientName = apiProposal.clientName || ''
   return {
     id: apiProposal.id,
     jobId: apiProposal.jobId,
     jobTitle: apiProposal.jobTitle || '',
     jobStatus: apiProposal.jobStatus?.toLowerCase() || '',
     userId: apiProposal.userId,
-    userSlug: userName ? slugify(userName) : '',
+    userSlug: apiProposal.userSlug || (userName ? slugify(userName) : ''),
     userName,
     userAvatar: apiProposal.userAvatar || '',
     rating: apiProposal.rating ?? 0,
@@ -90,8 +93,58 @@ export const normalizeProposal = (apiProposal) => {
     portfolioItems: apiProposal.portfolioItems ?? 0,
     status: apiProposal.status?.toLowerCase() || 'pending',
     clientId: apiProposal.clientId,
-    clientName: apiProposal.clientName || '',
+    clientName,
+    clientSlug: apiProposal.clientSlug || (clientName ? slugify(clientName) : ''),
     clientAvatar: apiProposal.clientAvatar || '',
     createdAt: apiProposal.createdAt,
+  }
+}
+
+export const normalizeChat = (apiChat) => {
+  const participantName = apiChat.participantName || 'Пользователь'
+  return {
+    id: apiChat.id,
+    participantId: apiChat.participantId,
+    participantName,
+    participantSlug: apiChat.participantSlug || slugify(participantName),
+    participantAvatar: apiChat.participantAvatar || '',
+    lastMessage: apiChat.lastMessage || '',
+    lastMessageAt: apiChat.lastMessageAt,
+    unreadCount: apiChat.unreadCount ?? 0,
+    jobId: apiChat.jobId,
+    jobTitle: apiChat.jobTitle || '',
+    createdAt: apiChat.createdAt,
+  }
+}
+
+export const normalizeMessage = (apiMessage) => {
+  const senderName = apiMessage.senderName || 'Пользователь'
+  return {
+    id: apiMessage.id,
+    chatId: apiMessage.chatId,
+    senderId: apiMessage.senderId,
+    senderName,
+    senderSlug: apiMessage.senderSlug || slugify(senderName),
+    senderAvatar: apiMessage.senderAvatar || '',
+    text: apiMessage.text || '',
+    isRead: apiMessage.isRead ?? false,
+    attachments: apiMessage.attachments || [],
+    createdAt: apiMessage.createdAt,
+  }
+}
+
+export const normalizeReview = (apiReview) => {
+  const authorName = apiReview.authorName || 'Аноним'
+  return {
+    id: apiReview.id,
+    authorId: apiReview.authorId,
+    authorName,
+    authorSlug: apiReview.authorSlug || slugify(authorName),
+    authorAvatar: apiReview.authorAvatar || '',
+    rating: apiReview.rating || 0,
+    text: apiReview.text || '',
+    jobId: apiReview.jobId,
+    jobTitle: apiReview.jobTitle || '',
+    createdAt: apiReview.createdAt,
   }
 }

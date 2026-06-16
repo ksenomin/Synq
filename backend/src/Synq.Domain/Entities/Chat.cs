@@ -8,7 +8,8 @@ public class Chat
     public Guid? JobId { get; set; }
     public string? LastMessage { get; set; }
     public DateTime? LastMessageAt { get; set; }
-    public int UnreadCount { get; set; }
+    public int UnreadCountByUser { get; set; }
+    public int UnreadCountByParticipant { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public bool IsLeftByUser { get; set; }

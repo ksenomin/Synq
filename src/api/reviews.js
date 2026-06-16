@@ -6,6 +6,11 @@ export const reviewsApi = {
     return data
   },
 
+  getMyReviews: async () => {
+    const { data } = await api.get('/reviews/my')
+    return data
+  },
+
   create: async (reviewData) => {
     const { data } = await api.post('/reviews', reviewData)
     return data

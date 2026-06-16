@@ -82,6 +82,22 @@ const JobCard = ({ job }) => {
             </span>
           </div>
         </div>
+
+        {/* Заказчик */}
+        <Link
+          to={`/profile/${job.clientSlug}`}
+          className="flex items-center gap-2 pt-4 border-t border-gray-100 hover:bg-gray-50 -mx-4 -mb-4 sm:-mx-6 sm:-mb-6 px-4 py-3 sm:px-6 sm:py-4 rounded-b-2xl transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Avatar
+            src={job.clientAvatar}
+            name={job.clientName}
+            size="sm"
+          />
+          <span className="text-sm text-gray-700 truncate">
+            {job.clientName || 'Заказчик'}
+          </span>
+        </Link>
       </Card>
     </motion.div>
   )

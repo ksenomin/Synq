@@ -37,6 +37,28 @@ public class ReviewService
             .ToListAsync(ct);
 
     /// <summary>
+    /// Gets all reviews written by the specified user.
+    /// </summary>
+    public async Task<List<ReviewDto>> GetMyReviewsAsync(Guid authorId, CancellationToken ct = default) =>
+        await _context.Reviews
+            .Include(r => r.Job)
+            .Where(r => r.AuthorId == authorId)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new ReviewDto
+            {
+                Id = r.Id,
+                AuthorId = r.AuthorId,
+                AuthorName = r.Author.Name,
+                AuthorAvatar = r.Author.AvatarUrl,
+                Rating = r.Rating,
+                Text = r.Text,
+                JobId = r.JobId,
+                JobTitle = r.Job != null ? r.Job.Title : null,
+                CreatedAt = r.CreatedAt
+            })
+            .ToListAsync(ct);
+
+    /// <summary>
     /// Creates a new review and updates the user's average rating.
     /// </summary>
     public async Task<ReviewDto> CreateAsync(Guid authorId, CreateReviewRequest request, CancellationToken ct = default)

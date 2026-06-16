@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { Paperclip, Check, CheckCheck } from 'lucide-react'
 import { Avatar } from '../common'
 import { formatTime } from '../../utils/helpers'
@@ -18,11 +19,17 @@ const ChatMessage = ({ message, isOwn }) => {
       <div className={`flex items-end gap-2 max-w-[85%] sm:max-w-[75%] ${isOwn ? 'flex-row-reverse' : ''}`}>
         {/* Аватар (только для входящих) */}
         {!isOwn && (
-          <Avatar
-            src={message.senderAvatar}
-            name={message.senderName}
-            size="sm"
-          />
+          <Link
+            to={`/profile/${message.senderSlug}`}
+            className="shrink-0"
+            title={message.senderName}
+          >
+            <Avatar
+              src={message.senderAvatar}
+              name={message.senderName}
+              size="sm"
+            />
+          </Link>
         )}
 
         {/* Пузырь сообщения */}

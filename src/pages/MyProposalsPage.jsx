@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Briefcase, Clock, DollarSign, FileText, Eye, XCircle, CheckCircle, Star } from 'lucide-react'
 import { Card, Badge, Button } from '../components/common'
 import { ReviewModal } from '../components/features'
-import { proposalsApi, jobsApi } from '../api'
+import { proposalsApi, jobsApi, reviewsApi } from '../api'
 import { useAppContext } from '../store'
 import { formatBudget, formatRelativeDate } from '../utils/helpers'
-import { normalizeJob } from '../utils/normalize'
+import { normalizeJob, normalizeProposal } from '../utils/normalize'
 
 const MyProposalsPage = () => {
   const navigate = useNavigate()
@@ -17,6 +17,7 @@ const MyProposalsPage = () => {
   const [withdrawingId, setWithdrawingId] = useState(null)
   const [notification, setNotification] = useState(null)
   const [selectedProposalForReview, setSelectedProposalForReview] = useState(null)
+  const [myReviews, setMyReviews] = useState([])
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type })
@@ -27,7 +28,7 @@ const MyProposalsPage = () => {
     setLoading(true)
     proposalsApi.getMyProposals()
       .then((data) => {
-        setProposals(data.items || [])
+        setProposals((data.items || []).map((p) => normalizeProposal(p)))
       })
       .catch((err) => {
         console.error('Ошибка получения откликов:', err)
@@ -36,8 +37,19 @@ const MyProposalsPage = () => {
       .finally(() => setLoading(false))
   }
 
+  const loadMyReviews = () => {
+    reviewsApi.getMyReviews()
+      .then((data) => {
+        setMyReviews(data || [])
+      })
+      .catch((err) => {
+        console.error('Ошибка получения моих отзывов:', err)
+      })
+  }
+
   useEffect(() => {
     loadProposals()
+    loadMyReviews()
   }, [])
 
   const handleWithdraw = async (proposalId) => {
@@ -79,6 +91,8 @@ const MyProposalsPage = () => {
     const statusInfo = statusMap[status?.toLowerCase()] || statusMap.pending
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
   }
+
+  const reviewedJobIds = new Set(myReviews.filter((r) => r.jobId).map((r) => r.jobId))
 
   if (loading) {
     return (
@@ -160,7 +174,9 @@ const MyProposalsPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {proposal.status?.toLowerCase() === 'accepted' && proposal.jobStatus?.toLowerCase() === 'completed' && (
+                      {proposal.status?.toLowerCase() === 'accepted' &&
+                        proposal.jobStatus?.toLowerCase() === 'completed' &&
+                        !reviewedJobIds.has(proposal.jobId) && (
                         <Button
                           variant="primary"
                           size="sm"
@@ -238,7 +254,10 @@ const MyProposalsPage = () => {
                   </div>
 
                   {/* Информация о заказчике */}
-                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                  <Link
+                    to={`/profile/${proposal.clientSlug}`}
+                    className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  >
                     <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
                       {proposal.clientAvatar ? (
                         <img
@@ -253,12 +272,12 @@ const MyProposalsPage = () => {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">
+                      <p className="font-semibold text-gray-900 truncate hover:text-primary-600 transition-colors">
                         {proposal.clientName}
                       </p>
                       <p className="text-sm text-gray-500">Заказчик</p>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               </motion.div>
             ))}
@@ -273,7 +292,10 @@ const MyProposalsPage = () => {
           jobTitle={selectedProposalForReview?.jobTitle}
           userId={selectedProposalForReview?.clientId}
           jobId={selectedProposalForReview?.jobId}
-          onSuccess={loadProposals}
+          onSuccess={() => {
+            loadProposals()
+            loadMyReviews()
+          }}
         />
       </div>
     </div>

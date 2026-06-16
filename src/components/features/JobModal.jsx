@@ -12,8 +12,8 @@ import {
   FileText,
   CheckCircle,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { Button, Badge } from '../common'
+import { useNavigate, Link } from 'react-router-dom'
+import { Button, Badge, Avatar } from '../common'
 import { useAppContext } from '../../store'
 import { formatBudgetRange, formatDate, getCategoryBadgeColor } from '../../utils/helpers'
 import { proposalsApi, chatsApi } from '../../api'
@@ -173,6 +173,24 @@ const JobModal = () => {
                     </Badge>
                   )}
                 </div>
+
+                {/* Заказчик */}
+                <Link
+                  to={`/profile/${selectedJob.clientSlug}`}
+                  className="flex items-center gap-3 p-4 mb-6 bg-gray-800/50 rounded-xl hover:bg-gray-800 transition-colors"
+                >
+                  <Avatar
+                    src={selectedJob.clientAvatar}
+                    name={selectedJob.clientName}
+                    size="md"
+                  />
+                  <div>
+                    <p className="text-sm text-gray-400">Заказчик</p>
+                    <p className="font-semibold text-white">
+                      {selectedJob.clientName || 'Неизвестно'}
+                    </p>
+                  </div>
+                </Link>
 
                 <div className="bg-gray-800/50 rounded-xl p-4 mb-6">
                   <p className="text-sm text-gray-400 mb-1">Бюджет</p>

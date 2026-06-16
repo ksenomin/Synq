@@ -25,6 +25,17 @@ public class ReviewsController : BaseController
     }
 
     /// <summary>
+    /// Gets all reviews written by the current user.
+    /// </summary>
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<IActionResult> GetMyReviews(CancellationToken ct)
+    {
+        var reviews = await _service.GetMyReviewsAsync(GetCurrentUserId(), ct);
+        return Ok(reviews);
+    }
+
+    /// <summary>
     /// Creates a new review. Requires authentication.
     /// </summary>
     [HttpPost]

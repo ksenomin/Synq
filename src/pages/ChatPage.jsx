@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import {
   Send,
   Paperclip,
@@ -13,7 +13,7 @@ import { useAppContext } from '../store'
 import { chatsApi, jobsApi } from '../api'
 import { signalRService } from '../api/signalr'
 import { formatRelativeDate } from '../utils/helpers'
-import { normalizeJob } from '../utils/normalize'
+import { normalizeJob, normalizeChat, normalizeMessage } from '../utils/normalize'
 
 const ChatPage = () => {
   const { state } = useAppContext()
@@ -44,17 +44,18 @@ const ChatPage = () => {
   const loadChats = useCallback(async (selectChatId) => {
     try {
       const data = await chatsApi.getMyChats()
-      setChats(data || [])
+      const normalized = (data || []).map((c) => normalizeChat(c))
+      setChats(normalized)
       if (selectChatId) {
-        const found = data?.find((c) => c.id === selectChatId)
+        const found = normalized.find((c) => c.id === selectChatId)
         if (found) {
           setActiveChatId(selectChatId)
           setShowChat(true)
-        } else if (data?.length > 0) {
-          setActiveChat(data[0].id)
+        } else if (normalized.length > 0) {
+          setActiveChatId(normalized[0].id)
         }
       }
-      return data
+      return normalized
     } catch (err) {
       console.error('Ошибка загрузки чатов:', err)
       return []
@@ -65,9 +66,9 @@ const ChatPage = () => {
     if (!chatId) return
     try {
       const data = await chatsApi.getMessages(chatId)
-      const sorted = (data.items || []).sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      )
+      const sorted = (data.items || [])
+        .map((m) => normalizeMessage(m))
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
       return sorted
     } catch (err) {
       console.error('Ошибка загрузки сообщений:', err)
@@ -104,19 +105,20 @@ const ChatPage = () => {
     const handlers = {
       onMessage: (msg) => {
         if (!msg) return
+        const normalized = normalizeMessage(msg)
         setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) return prev
+          if (prev.some((m) => m.id === normalized.id)) return prev
           const filtered = prev.filter(
             (m) =>
               !(
                 typeof m.id === 'string' &&
                 m.id.startsWith('temp-') &&
-                m.chatId === msg.chatId &&
-                m.senderId === msg.senderId &&
-                m.text === msg.text
+                m.chatId === normalized.chatId &&
+                m.senderId === normalized.senderId &&
+                m.text === normalized.text
               )
           )
-          return [...filtered, msg].sort(
+          return [...filtered, normalized].sort(
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           )
         })
@@ -220,6 +222,7 @@ const ChatPage = () => {
       chatId: activeChatId,
       senderId: currentUserId,
       senderName: state.currentUser?.name || 'Вы',
+      senderSlug: state.currentUser?.slug || '',
       senderAvatar: state.currentUser?.avatarUrl || '',
       text,
       isRead: true,
@@ -231,7 +234,7 @@ const ChatPage = () => {
     setChats((prev) =>
       prev.map((c) =>
         c.id === activeChatId
-          ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString() }
+          ? { ...c, lastMessage: text, lastMessageAt: new Date().toISOString(), unreadCount: 0 }
           : c
       )
     )
@@ -242,10 +245,11 @@ const ChatPage = () => {
         await signalRService.sendMessage(activeChatId, text)
       } else {
         const msg = await chatsApi.sendMessage(activeChatId, text)
+        const normalized = normalizeMessage(msg)
         setMessages((prev) => {
           const without = prev.filter((m) => m.id !== optimisticMsg.id)
-          if (without.some((m) => m.id === msg.id)) return without
-          return [...without, msg].sort(
+          if (without.some((m) => m.id === normalized.id)) return without
+          return [...without, normalized].sort(
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           )
         })
@@ -289,28 +293,46 @@ const ChatPage = () => {
             filteredChats.map((chat) => {
               const isActive = chat.id === activeChatId
               return (
-                <button
+                <div
                   key={chat.id}
                   onClick={() => {
                     setActiveChatId(chat.id)
                     setShowChat(true)
                   }}
-                  className={`w-full flex items-start gap-3 p-4 border-b border-gray-50 transition-colors text-left ${
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setActiveChatId(chat.id)
+                      setShowChat(true)
+                    }
+                  }}
+                  className={`w-full flex items-start gap-3 p-4 border-b border-gray-50 transition-colors text-left cursor-pointer ${
                     isActive
                       ? 'bg-primary-50 border-l-4 border-l-primary-600'
                       : 'hover:bg-gray-50'
                   }`}
                 >
-                  <Avatar
-                    src={chat.participantAvatar || ''}
-                    name={chat.participantName || 'Пользователь'}
-                    size="md"
-                  />
+                  <Link
+                    to={`/profile/${chat.participantSlug}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0"
+                  >
+                    <Avatar
+                      src={chat.participantAvatar || ''}
+                      name={chat.participantName || 'Пользователь'}
+                      size="md"
+                    />
+                  </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold text-gray-900 text-sm truncate">
+                      <Link
+                        to={`/profile/${chat.participantSlug}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-semibold text-gray-900 text-sm truncate hover:text-primary-600 transition-colors"
+                      >
                         {chat.participantName || 'Пользователь'}
-                      </p>
+                      </Link>
                       <span className="text-xs text-gray-400 flex-shrink-0">
                         {chat.lastMessageAt ? formatRelativeDate(chat.lastMessageAt) : ''}
                       </span>
@@ -329,7 +351,7 @@ const ChatPage = () => {
                       {chat.unreadCount}
                     </span>
                   )}
-                </button>
+                </div>
               )
             })
           )}
@@ -352,15 +374,23 @@ const ChatPage = () => {
                 >
                   <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </button>
-                <Avatar
-                  src={activeChat.participantAvatar || ''}
-                  name={activeChat.participantName || 'Пользователь'}
-                  size="md"
-                />
+                <Link
+                  to={`/profile/${activeChat.participantSlug}`}
+                  className="shrink-0"
+                >
+                  <Avatar
+                    src={activeChat.participantAvatar || ''}
+                    name={activeChat.participantName || 'Пользователь'}
+                    size="md"
+                  />
+                </Link>
                 <div>
-                  <p className="font-semibold text-gray-900">
+                  <Link
+                    to={`/profile/${activeChat.participantSlug}`}
+                    className="font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+                  >
                     {activeChat.participantName || 'Пользователь'}
-                  </p>
+                  </Link>
                   <p className="text-sm text-gray-500">
                     {activeChat.jobTitle || 'Чат'}
                   </p>
@@ -392,6 +422,7 @@ const ChatPage = () => {
                       chatId: message.chatId,
                       senderId: message.senderId,
                       senderName: message.senderName,
+                      senderSlug: message.senderSlug,
                       senderAvatar: message.senderAvatar,
                       text: message.text,
                       timestamp: message.createdAt,

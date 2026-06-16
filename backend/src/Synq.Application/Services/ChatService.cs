@@ -32,7 +32,7 @@ public class ChatService
                 ParticipantAvatar = c.UserId == userId ? c.Participant.AvatarUrl : c.User.AvatarUrl,
                 LastMessage = c.LastMessage,
                 LastMessageAt = c.LastMessageAt,
-                UnreadCount = c.UnreadCount,
+                UnreadCount = c.UserId == userId ? c.UnreadCountByUser : c.UnreadCountByParticipant,
                 JobId = c.JobId,
                 JobTitle = c.Job != null ? c.Job.Title : null,
                 CreatedAt = c.CreatedAt
@@ -62,7 +62,7 @@ public class ChatService
                 existing.LeftAtByParticipant = null;
             }
             await _context.SaveChangesAsync(ct);
-            return await GetDtoAsync(existing.Id, ct);
+            return await GetDtoAsync(existing.Id, userId, ct);
         }
 
         var chat = new Domain.Entities.Chat
@@ -77,7 +77,7 @@ public class ChatService
         _context.Chats.Add(chat);
         await _context.SaveChangesAsync(ct);
 
-        return await GetDtoAsync(chat.Id, ct);
+        return await GetDtoAsync(chat.Id, userId, ct);
     }
 
     /// <summary>
@@ -136,21 +136,22 @@ public class ChatService
         chat.LastMessage = text;
         chat.LastMessageAt = DateTime.UtcNow;
 
-        if (chat.UserId != senderId)
+        if (chat.UserId == senderId)
         {
-            chat.UnreadCount++;
-            if (chat.IsLeftByUser)
-            {
-                chat.IsLeftByUser = false;
-                chat.LeftAtByUser = null;
-            }
-        }
-        else
-        {
+            chat.UnreadCountByParticipant++;
             if (chat.IsLeftByParticipant)
             {
                 chat.IsLeftByParticipant = false;
                 chat.LeftAtByParticipant = null;
+            }
+        }
+        else
+        {
+            chat.UnreadCountByUser++;
+            if (chat.IsLeftByUser)
+            {
+                chat.IsLeftByUser = false;
+                chat.LeftAtByUser = null;
             }
         }
 
@@ -177,7 +178,11 @@ public class ChatService
         var chat = await _context.Chats.FindAsync(new object[] { chatId }, cancellationToken: ct);
         if (chat != null && (chat.UserId == userId || chat.ParticipantId == userId))
         {
-            chat.UnreadCount = 0;
+            if (chat.UserId == userId)
+                chat.UnreadCountByUser = 0;
+            else
+                chat.UnreadCountByParticipant = 0;
+
             await _context.SaveChangesAsync(ct);
         }
     }
@@ -205,7 +210,7 @@ public class ChatService
         await _context.SaveChangesAsync(ct);
     }
 
-    private async Task<ChatDto> GetDtoAsync(Guid chatId, CancellationToken ct)
+    private async Task<ChatDto> GetDtoAsync(Guid chatId, Guid currentUserId, CancellationToken ct)
     {
         var chat = await _context.Chats
             .Include(c => c.User)
@@ -214,16 +219,15 @@ public class ChatService
             .FirstOrDefaultAsync(c => c.Id == chatId, ct)
             ?? throw new KeyNotFoundException("Chat not found");
 
-        var isCurrentUser = chat.UserId;
         return new ChatDto
         {
             Id = chat.Id,
-            ParticipantId = isCurrentUser == chat.UserId ? chat.ParticipantId : chat.UserId,
-            ParticipantName = isCurrentUser == chat.UserId ? chat.Participant.Name : chat.User.Name,
-            ParticipantAvatar = isCurrentUser == chat.UserId ? chat.Participant.AvatarUrl : chat.User.AvatarUrl,
+            ParticipantId = chat.UserId == currentUserId ? chat.ParticipantId : chat.UserId,
+            ParticipantName = chat.UserId == currentUserId ? chat.Participant.Name : chat.User.Name,
+            ParticipantAvatar = chat.UserId == currentUserId ? chat.Participant.AvatarUrl : chat.User.AvatarUrl,
             LastMessage = chat.LastMessage,
             LastMessageAt = chat.LastMessageAt,
-            UnreadCount = chat.UnreadCount,
+            UnreadCount = chat.UserId == currentUserId ? chat.UnreadCountByUser : chat.UnreadCountByParticipant,
             JobId = chat.JobId,
             JobTitle = chat.Job?.Title,
             CreatedAt = chat.CreatedAt

@@ -67,8 +67,10 @@ public class ChatHub : Hub
         chat.LastMessageAt = DateTime.UtcNow;
 
         var receiverId = chat.UserId == senderId ? chat.ParticipantId : chat.UserId;
-        if (chat.UserId != senderId)
-            chat.UnreadCount++;
+        if (chat.UserId == senderId)
+            chat.UnreadCountByParticipant++;
+        else
+            chat.UnreadCountByUser++;
 
         await _context.SaveChangesAsync();
 
@@ -97,12 +99,13 @@ public class ChatHub : Hub
         await Clients.Caller.SendAsync("MessageSent", messageDto);
 
         // Обновляем чат в списке у получателя
+        var receiverUnreadCount = chat.UserId == receiverId ? chat.UnreadCountByUser : chat.UnreadCountByParticipant;
         var chatUpdateDto = new
         {
             chatId = chat.Id,
             lastMessage = chat.LastMessage,
             lastMessageAt = chat.LastMessageAt,
-            unreadCount = chat.UnreadCount
+            unreadCount = receiverUnreadCount
         };
         if (receiverConnectionId != null)
         {
@@ -120,7 +123,11 @@ public class ChatHub : Hub
         var chat = await _context.Chats.FindAsync(chatId);
         if (chat != null && (chat.UserId == userId || chat.ParticipantId == userId))
         {
-            chat.UnreadCount = 0;
+            if (chat.UserId == userId)
+                chat.UnreadCountByUser = 0;
+            else
+                chat.UnreadCountByParticipant = 0;
+
             await _context.SaveChangesAsync();
 
             var otherUserId = chat.UserId == userId ? chat.ParticipantId : chat.UserId;

@@ -25,7 +25,7 @@ import { Button, Avatar, Badge, Card, Modal, Input } from '../components/common'
 import { PostCard } from '../components/features'
 import { usersApi, postsApi, reviewsApi, chatsApi, jobsApi } from '../api'
 import { useAppContext } from '../store'
-import { normalizeUser } from '../utils/normalize'
+import { normalizeUser, normalizeReview } from '../utils/normalize'
 import { formatBudget, getRoleName, translateApiError } from '../utils/helpers'
 
 const ProfilePage = () => {
@@ -79,7 +79,7 @@ const ProfilePage = () => {
       ])
     }).then(([postsData, reviewsData, jobsData]) => {
       setPosts(Array.isArray(postsData?.items) ? postsData.items : [])
-      setReviews(Array.isArray(reviewsData) ? reviewsData : [])
+      setReviews(Array.isArray(reviewsData) ? reviewsData.map((r) => normalizeReview(r)) : [])
       setCompletedJobsCount(jobsData?.totalCount || 0)
     }).catch((err) => console.error('Ошибка загрузки профиля:', err)).finally(() => setLoading(false))
   }, [id])
@@ -417,16 +417,21 @@ const ProfilePage = () => {
                   {reviews.map((review) => (
                     <Card key={review.id} className="p-6">
                       <div className="flex items-start gap-4">
-                        <Avatar
-                          src={review.authorAvatar || ''}
-                          name={review.authorName || 'Аноним'}
-                          size="md"
-                        />
+                        <Link to={`/profile/${review.authorSlug}`} className="shrink-0">
+                          <Avatar
+                            src={review.authorAvatar || ''}
+                            name={review.authorName || 'Аноним'}
+                            size="md"
+                          />
+                        </Link>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <p className="font-semibold text-gray-900">
+                            <Link
+                              to={`/profile/${review.authorSlug}`}
+                              className="font-semibold text-gray-900 hover:text-primary-600 transition-colors"
+                            >
                               {review.authorName || 'Аноним'}
-                            </p>
+                            </Link>
                             <div className="flex items-center gap-1 text-yellow-500">
                               {Array.from({ length: review.rating }).map((_, i) => (
                                 <Star key={i} className="w-4 h-4 fill-current" />
